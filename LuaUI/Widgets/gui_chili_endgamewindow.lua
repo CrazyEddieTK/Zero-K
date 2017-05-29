@@ -148,14 +148,59 @@ local function ShowStats()
 end
 
 
+-- TESTING MOCK
+---[[
+local mock_awards = {
+	{
+		pwn     = 'Damaged value: 1',
+		navy    = 'Damaged value: 1',
+		air     = 'Damaged value: 1',
+		nux     = 'Damaged value: 1',
+		friend  = 'Damage inflicted on allies: 1',
+		shell   = 'Damaged value: 1',
+		fire    = 'Burnt value: 1',
+		emp     = 'Stunned value: 1',
+		slow    = 'Slowed value: 1',
+		t3      = 'Experimental Engineer',
+		cap     = 'Captured value: 1',
+		share   = 'Shared value: 1',
+		terra   = 'Terraform: 1',
+		reclaim = 'Reclaimed value: 1',
+		rezz    = 'Resurrected value: 1',
+		vet     = 'Flea: 1000% cost made',
+		ouch    = 'Damage received: 1',
+		kam     = 'Damaged value: 1',
+		comm    = 'Damaged value: 1',
+		mex     = 'Mexes built: 1',
+		mexkill = 'Mexes destroyed: 1',
+		rage    = 'Damaged value: 1',
+		head    = '1 Commanders eliminated',
+		dragon  = '1 White Dragons annihilated',
+		heart   = 'Damage: 1',
+		sweeper = '1 Nests wiped out',
+	},
+	{
+	},
+	{
+	},
+	{
+	},
+	{
+		ouch = 'Damaged received: 10,000',
+	},
+}
+--]]
 
 local function SetupAwardsPanel()
 	awardSubPanel:ClearChildren()
-	for teamID,awards in pairs(WG.awardList) do
-		--echo(k, v)
+--	for teamID,awards in pairs(WG.awardList) do
+	for teamID,awards in pairs(mock_awards) do -- TESTING MOCK
+
+		echo(teamID) -- TESTING MOCK
 		
 		local playerHasAward
 		for awardType, record in pairs(awards) do
+			echo("Award Type: "..awardType.." Record: "..record) -- TESTING MOCK
 			playerHasAward = true
 		end
 		if playerHasAward then
@@ -380,6 +425,7 @@ function widget:Update(dt)
 		return
 	end
 	
+	SetupAwardsPanel() -- TESTING MOCK
 	ShowEndGameWindow()
 	showEndgameWindowTimer = nil
 end
