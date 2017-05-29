@@ -29,6 +29,7 @@ local Panel
 local ScrollPanel
 local StackPanel
 local Label
+local Line
 local screen0
 local color2incolor
 local incolor2color
@@ -204,6 +205,49 @@ local function SetupAwardsPanel()
 			playerHasAward = true
 		end
 		if playerHasAward then
+			
+			playerBox = Panel:New {
+				parent = awardSubPanel,
+				width = 230 * 3.5,
+				height = awardPanelHeight * 3 + 30,
+				borderThickness = 3,
+				borderColor     = {0.5, 0.5, 0.5, 0.6},
+			}
+			playerLabel = Label:New {
+				parent = playerBox,
+				align = 'center',
+				x=0, y=0,
+				width = 230 * 2,
+--				height = 25,
+				autosize = true,
+				caption = teamNames[teamID],
+				fontSize = 20,
+				fontShadow = true,
+				textColor = teamColors[teamID],
+			}
+			playerLine = Line:New {
+				parent = playerBox,
+				y = 25,
+				width = '80%',
+				x = 230 * 2 * .10,
+			}
+---[[
+			awardsBox = StackPanel:New {
+				parent = playerBox,
+				x = 0,
+				y = 30,
+				width = '100%',
+				height = '100%',
+				resizeItems = false,
+				centerItems = false,
+				orientation = 'horizontal';
+			}
+
+			for awardType, record in pairs(awards) do
+				awardsBox:AddChild( MakeAwardPanel(awardType, record) )
+			end
+--]]
+--[[
 			Label:New{ caption = teamNames[teamID], width=120; fontShadow = true; valign='center'; autosize=false, height=awardPanelHeight; textColor=teamColors[teamID]; 	parent=awardSubPanel }
 		
 			for awardType, record in pairs(awards) do
@@ -212,6 +256,7 @@ local function SetupAwardsPanel()
 			end
 			
 			Label:New{ caption = string.rep('-', 300), textColor = {0.4,0.4,0.4,0.4}; autosize=false; width='100%'; height=5; parent=awardSubPanel } --spacer label to force a "line break"
+--]]
 		end
 	end
 end
@@ -224,7 +269,8 @@ function SetAwardList(awardList)
 end
 
 local function ShowEndGameWindow()
-	if WG.awardList then
+--	if WG.awardList then
+	if true then -- TESTING MOCK
 		ShowAwards()
 	else
 		ShowStats()
@@ -348,6 +394,7 @@ function widget:Initialize()
 	ScrollPanel = Chili.ScrollPanel
 	StackPanel = Chili.StackPanel
 	Label = Chili.Label
+	Line = Chili.Line
 	screen0 = Chili.Screen0
 	color2incolor = Chili.color2incolor
 	incolor2color = Chili.incolor2color
