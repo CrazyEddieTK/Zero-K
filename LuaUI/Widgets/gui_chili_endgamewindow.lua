@@ -51,6 +51,7 @@ local teamNames = {}
 local teamColors = {}
 
 local awardPanelHeight = 50
+local awardPanelWidth = 230
 
 local SELECT_BUTTON_COLOR = {0.98, 0.48, 0.26, 0.85}
 local SELECT_BUTTON_FOCUS_COLOR = {0.98, 0.48, 0.26, 0.85}
@@ -78,12 +79,15 @@ local function SetTeamNamesAndColors()
   end
 end
 
+-- TODO: L_HEIGHT and parent=awardPanel are probably detritus
+--	Confirm they're unneeded, then remove them
+--
 local function MakeAwardPanel(awardType, record)
 	local desc = awardDescs[awardType]
 	local fontsize = desc:len() > 25 and 12 or 16
 	return Panel:New{
-		width=230;
-		height=awardPanelHeight;
+		width=awardPanelWidth,
+		height=awardPanelHeight,
 		children = {
 			Image:New{ file='LuaRules/Images/awards/trophy_'.. awardType ..'.png'; 		parent=awardPanel; x=0;y=0; width=30; height=40; };
 			Label:New{ caption = desc; 		autosize=true, height=L_HEIGHT, parent=awardPanel; x=35; y=0;	textColor={1,1,0,1}; fontsize=fontsize; };
@@ -152,6 +156,7 @@ end
 -- TESTING MOCK
 ---[[
 local mock_awards = {
+--[[
 	{
 		pwn     = 'Damaged value: 1',
 		navy    = 'Damaged value: 1',
@@ -180,11 +185,29 @@ local mock_awards = {
 		heart   = 'Damage: 1',
 		sweeper = '1 Nests wiped out',
 	},
+--]]
 	{
+		pwn     = 'Damaged value: 1',
+		navy    = 'Damaged value: 1',
+		air     = 'Damaged value: 1',
+		vet     = 'Flea: 1000% cost made',
 	},
 	{
+		pwn     = 'Damaged value: 1',
+		navy    = 'Damaged value: 1',
+		air     = 'Damaged value: 1',
+		nux     = 'Damaged value: 1',
+		friend  = 'Damage inflicted on allies: 1',
 	},
 	{
+		pwn     = 'Damaged value: 1',
+		navy    = 'Damaged value: 1',
+		air     = 'Damaged value: 1',
+		nux     = 'Damaged value: 1',
+		friend  = 'Damage inflicted on allies: 1',
+		shell   = 'Damaged value: 1',
+		ouch = 'Damaged received: 10,000',
+		vet     = 'Flea: 1000% cost made',
 	},
 	{
 		ouch = 'Damaged received: 10,000',
@@ -197,56 +220,79 @@ local function SetupAwardsPanel()
 --	for teamID,awards in pairs(WG.awardList) do
 	for teamID,awards in pairs(mock_awards) do -- TESTING MOCK
 
+-- TODO: Sort by number of awards; it will make the display look nicer
+--	because the larger boxes will be at the end instead of breaking up
+--	the 2x2 boxes, which will be most of them
+
 		echo(teamID) -- TESTING MOCK
 		
-		local playerHasAward
+--		local playerHasAward
+		local awardCount = 0
 		for awardType, record in pairs(awards) do
 			echo("Award Type: "..awardType.." Record: "..record) -- TESTING MOCK
-			playerHasAward = true
+--			playerHasAward = true
+			awardCount = awardCount + 1
 		end
-		if playerHasAward then
+--		if playerHasAward then
+		if awardCount > 0 then
 			
+			local box_wide = 0
+			local box_high = 0
+			local awards_wide = 0
+			local awards_high = 0
+
+			if awardCount == 1 then
+				box_wide, box_high, awards_wide, awards_high = 2, 2, 1, 1
+			elseif awardCount == 2 then
+				box_wide, box_high, awards_wide, awards_high = 2, 2, 1, 2
+			elseif awardCount == 3 or awardCount == 4 then
+				box_wide, box_high, awards_wide, awards_high = 2, 2, 2, 2
+			elseif awardCount <= 6 then
+				box_wide, box_high, awards_wide, awards_high = 2, 3, 2, 3
+			else
+				local high = math.ceil(awardCount / 3)
+				box_wide, box_high, awards_wide, awards_high = 3, high, 3, high
+			end
+
 			playerBox = Panel:New {
 				parent = awardSubPanel,
-				width = 230 * 3.5,
-				height = awardPanelHeight * 3 + 30,
-				borderThickness = 3,
-				borderColor     = {0.5, 0.5, 0.5, 0.6},
+				width = awardPanelWidth * box_wide + 50,
+				height = (awardPanelHeight + 5) * box_high + 50, -- I need to get this exactly right because otherwise StackPanel will get it wrong
 			}
 			playerLabel = Label:New {
 				parent = playerBox,
 				align = 'center',
 				x=0, y=0,
-				width = 230 * 2,
---				height = 25,
+				width = awardPanelWidth * box_wide + 50,
 				autosize = true,
 				caption = teamNames[teamID],
-				fontSize = 20,
+				fontSize = 24,
 				fontShadow = true,
 				textColor = teamColors[teamID],
 			}
+---[[
 			playerLine = Line:New {
 				parent = playerBox,
 				y = 25,
-				width = '80%',
-				x = 230 * 2 * .10,
+				width = '70%',
+				x = (awardPanelWidth * box_wide + 50) * .15,
 			}
----[[
+--]]
 			awardsBox = StackPanel:New {
 				parent = playerBox,
 				x = 0,
-				y = 30,
+				y = 50,
 				width = '100%',
 				height = '100%',
 				resizeItems = false,
 				centerItems = false,
-				orientation = 'horizontal';
+				orientation = 'horizontal',
 			}
 
 			for awardType, record in pairs(awards) do
 				awardsBox:AddChild( MakeAwardPanel(awardType, record) )
 			end
---]]
+
 --[[
 			Label:New{ caption = teamNames[teamID], width=120; fontShadow = true; valign='center'; autosize=false, height=awardPanelHeight; textColor=teamColors[teamID]; 	parent=awardSubPanel }
 		
@@ -322,13 +368,16 @@ local function SetupControls()
 		backgroundColor  = {1,1,1,1},
 		borderColor = {1,1,1,1},
 		padding = {10, 10, 10, 10},
-		itemMargin = {1, 1, 1, 1},
+--		itemMargin = {1, 1, 1, 1},
 		tooltip = "",
 		autosize = true,
 		
 		resizeItems = false,
 		centerItems = false,
 		orientation = 'horizontal';
+
+		itemPadding = {0, 0, 0, 0},
+		itemMargin  = {5, 20, 5, 20},
 	}
 	
 	local B_HEIGHT = 40
