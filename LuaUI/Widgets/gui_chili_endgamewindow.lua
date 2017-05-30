@@ -153,8 +153,7 @@ end
 
 
 -- TESTING MOCK
-local mock_awards = {
----[[
+local mock_awards_a = {
 	{
 		pwn     = 'Damaged value: 1',
 		navy    = 'Damaged value: 1',
@@ -183,65 +182,78 @@ local mock_awards = {
 		heart   = 'Damage: 1',
 		sweeper = '1 Nests wiped out',
 	},
---]]
+}
+local mock_awards_b = {
+	{
+		pwn     = 'Damaged value: 1',
+	},
+	{
+		ouch    = 'Damage received: 1',
+	},
+}
+local mock_awards_c = {
 	{
 		pwn     = 'Damaged value: 1',
 		navy    = 'Damaged value: 1',
 		air     = 'Damaged value: 1',
-		vet     = 'Flea: 1000% cost made',
+		nux     = 'Damaged value: 1',
+		friend  = 'Damage inflicted on allies: 1',
 	},
 	{
+		shell   = 'Damaged value: 1',
+		emp     = 'Stunned value: 1',
 		slow    = 'Slowed value: 1',
+	},
+	{
+		cap     = 'Captured value: 1',
+		share   = 'Shared value: 1',
+	},
+	{
+		ouch    = 'Damage received: 1',
+	},
+}
+local mock_awards_d = {
+	{
+		pwn     = 'Damaged value: 1',
+		navy    = 'Damaged value: 1',
+		air     = 'Damaged value: 1',
+		nux     = 'Damaged value: 1',
+		friend  = 'Damage inflicted on allies: 1',
+		shell   = 'Damaged value: 1',
+		fire    = 'Burnt value: 1',
+		emp     = 'Stunned value: 1',
+		slow    = 'Slowed value: 1',
+	},
+	{
 		t3      = 'Experimental Engineer',
 		cap     = 'Captured value: 1',
 		share   = 'Shared value: 1',
 		terra   = 'Terraform: 1',
 		reclaim = 'Reclaimed value: 1',
 		rezz    = 'Resurrected value: 1',
-		vet     = 'Flea: 1000% cost made',
 	},
 	{
-		navy    = 'Damaged value: 1',
-		air     = 'Damaged value: 1',
 		vet     = 'Flea: 1000% cost made',
+		ouch    = 'Damage received: 1',
+		kam     = 'Damaged value: 1',
 	},
 	{
-		pwn     = 'Damaged value: 1',
-		vet     = 'Flea: 1000% cost made',
+		comm    = 'Damaged value: 1',
+		mex     = 'Mexes built: 1',
+		mexkill = 'Mexes destroyed: 1',
 	},
 	{
-		nux     = 'Damaged value: 1',
+		rage    = 'Damaged value: 1',
+		head    = '1 Commanders eliminated',
 	},
 	{
-		pwn     = 'Damaged value: 1',
-		navy    = 'Damaged value: 1',
-		air     = 'Damaged value: 1',
-		nux     = 'Damaged value: 1',
-		friend  = 'Damage inflicted on allies: 1',
-		shell   = 'Damaged value: 1',
-		vet     = 'Flea: 1000% cost made',
+		dragon  = '1 White Dragons annihilated',
 	},
 	{
-		pwn     = 'Damaged value: 1',
-		air     = 'Damaged value: 1',
-		nux     = 'Damaged value: 1',
-		friend  = 'Damage inflicted on allies: 1',
-		shell   = 'Damaged value: 1',
-		vet     = 'Flea: 1000% cost made',
+		heart   = 'Damage: 1',
 	},
 	{
-		pwn     = 'Damaged value: 1',
-		nux     = 'Damaged value: 1',
-		friend  = 'Damage inflicted on allies: 1',
-		shell   = 'Damaged value: 1',
-		vet     = 'Flea: 1000% cost made',
-	},
-	{
-		navy    = 'Damaged value: 1',
-		nux     = 'Damaged value: 1',
-		friend  = 'Damage inflicted on allies: 1',
-		shell   = 'Damaged value: 1',
-		vet     = 'Flea: 1000% cost made',
+		sweeper = '1 Nests wiped out',
 	},
 }
 
@@ -250,7 +262,7 @@ local function SetupAwardsPanel()
 	awardSubPanel:ClearChildren()
 	
 --	local awardList = WG.awardList
-	local awardList = mock_awards		-- TESTING MOCK
+	local awardList = mock_awards_d		-- TESTING MOCK
 
 	local sortedAwardList = {}
 	for teamID,awards in pairs(awardList) do
