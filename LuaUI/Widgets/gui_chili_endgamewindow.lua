@@ -245,22 +245,28 @@ local mock_awards = {
 	},
 }
 
+
 local function SetupAwardsPanel()
 	awardSubPanel:ClearChildren()
---	for teamID,awards in pairs(WG.awardList) do
-	for teamID,awards in pairs(mock_awards) do 		-- TESTING MOCK
+	
+--	local awardList = WG.awardList
+	local awardList = mock_awards		-- TESTING MOCK
 
--- TODO: Sort by number of awards; it will make the display look nicer
---	because the larger boxes will be at the end instead of breaking up
---	the 2x2 boxes, which will be most of them
---
---	Or maybe better to do largest first? So that the biggest winner has
---	the more prominent position? It might still look okay that way.
-
+	local sortedAwardList = {}
+	for teamID,awards in pairs(awardList) do
 		local awardCount = 0
 		for awardType, record in pairs(awards) do
 			awardCount = awardCount + 1
 		end
+		table.insert(sortedAwardList,{teamID,awards,awardCount})
+	end
+	table.sort(sortedAwardList, function(a,b) return a[3] > b[3] end)
+
+	for _,team in ipairs(sortedAwardList) do
+		
+		local teamID = team[1]
+		local awards = team[2]
+		local awardCount = team[3]
 
 		if awardCount > 0 then
 			local rows, cols = 0, 0
