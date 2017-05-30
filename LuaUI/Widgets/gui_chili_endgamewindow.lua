@@ -52,6 +52,8 @@ local teamColors = {}
 
 local awardPanelHeight = 50
 local awardPanelWidth = 230
+local awardPanelLabelHeight = 40
+local awardPad = 10
 
 local SELECT_BUTTON_COLOR = {0.98, 0.48, 0.26, 0.85}
 local SELECT_BUTTON_FOCUS_COLOR = {0.98, 0.48, 0.26, 0.85}
@@ -79,9 +81,6 @@ local function SetTeamNamesAndColors()
   end
 end
 
--- TODO: L_HEIGHT and parent=awardPanel are probably detritus
---	Confirm they're unneeded, then remove them
---
 local function MakeAwardPanel(awardType, record)
 	local desc = awardDescs[awardType]
 	local fontsize = desc:len() > 25 and 12 or 16
@@ -89,9 +88,9 @@ local function MakeAwardPanel(awardType, record)
 		width=awardPanelWidth,
 		height=awardPanelHeight,
 		children = {
-			Image:New{ file='LuaRules/Images/awards/trophy_'.. awardType ..'.png'; 		parent=awardPanel; x=0;y=0; width=30; height=40; };
-			Label:New{ caption = desc; 		autosize=true, height=L_HEIGHT, parent=awardPanel; x=35; y=0;	textColor={1,1,0,1}; fontsize=fontsize; };
-			Label:New{ caption = record, 	autosize=true, height=L_HEIGHT, parent=awardPanel; x=35; y=20 };
+			Image:New{ file='LuaRules/Images/awards/trophy_'.. awardType ..'.png'; 		x=0;y=0; width=30; height=40; };
+			Label:New{ caption = desc; 		autosize=true, x=35; y=0;	textColor={1,1,0,1}; fontsize=fontsize; };
+			Label:New{ caption = record, 	autosize=true, x=35; y=20 };
 		}
 	}
 end
@@ -154,9 +153,8 @@ end
 
 
 -- TESTING MOCK
----[[
 local mock_awards = {
---[[
+---[[
 	{
 		pwn     = 'Damaged value: 1',
 		navy    = 'Damaged value: 1',
@@ -193,11 +191,26 @@ local mock_awards = {
 		vet     = 'Flea: 1000% cost made',
 	},
 	{
-		pwn     = 'Damaged value: 1',
+		slow    = 'Slowed value: 1',
+		t3      = 'Experimental Engineer',
+		cap     = 'Captured value: 1',
+		share   = 'Shared value: 1',
+		terra   = 'Terraform: 1',
+		reclaim = 'Reclaimed value: 1',
+		rezz    = 'Resurrected value: 1',
+		vet     = 'Flea: 1000% cost made',
+	},
+	{
 		navy    = 'Damaged value: 1',
 		air     = 'Damaged value: 1',
+		vet     = 'Flea: 1000% cost made',
+	},
+	{
+		pwn     = 'Damaged value: 1',
+		vet     = 'Flea: 1000% cost made',
+	},
+	{
 		nux     = 'Damaged value: 1',
-		friend  = 'Damage inflicted on allies: 1',
 	},
 	{
 		pwn     = 'Damaged value: 1',
@@ -206,103 +219,100 @@ local mock_awards = {
 		nux     = 'Damaged value: 1',
 		friend  = 'Damage inflicted on allies: 1',
 		shell   = 'Damaged value: 1',
-		ouch = 'Damaged received: 10,000',
 		vet     = 'Flea: 1000% cost made',
 	},
 	{
-		ouch = 'Damaged received: 10,000',
+		pwn     = 'Damaged value: 1',
+		air     = 'Damaged value: 1',
+		nux     = 'Damaged value: 1',
+		friend  = 'Damage inflicted on allies: 1',
+		shell   = 'Damaged value: 1',
+		vet     = 'Flea: 1000% cost made',
+	},
+	{
+		pwn     = 'Damaged value: 1',
+		nux     = 'Damaged value: 1',
+		friend  = 'Damage inflicted on allies: 1',
+		shell   = 'Damaged value: 1',
+		vet     = 'Flea: 1000% cost made',
+	},
+	{
+		navy    = 'Damaged value: 1',
+		nux     = 'Damaged value: 1',
+		friend  = 'Damage inflicted on allies: 1',
+		shell   = 'Damaged value: 1',
+		vet     = 'Flea: 1000% cost made',
 	},
 }
---]]
 
 local function SetupAwardsPanel()
 	awardSubPanel:ClearChildren()
 --	for teamID,awards in pairs(WG.awardList) do
-	for teamID,awards in pairs(mock_awards) do -- TESTING MOCK
+	for teamID,awards in pairs(mock_awards) do 		-- TESTING MOCK
 
 -- TODO: Sort by number of awards; it will make the display look nicer
 --	because the larger boxes will be at the end instead of breaking up
 --	the 2x2 boxes, which will be most of them
+--
+--	Or maybe better to do largest first? So that the biggest winner has
+--	the more prominent position? It might still look okay that way.
 
-		echo(teamID) -- TESTING MOCK
-		
---		local playerHasAward
 		local awardCount = 0
 		for awardType, record in pairs(awards) do
-			echo("Award Type: "..awardType.." Record: "..record) -- TESTING MOCK
---			playerHasAward = true
 			awardCount = awardCount + 1
 		end
---		if playerHasAward then
+
 		if awardCount > 0 then
-			
-			local box_wide = 0
-			local box_high = 0
-			local awards_wide = 0
-			local awards_high = 0
+			local rows, cols = 0, 0
+			local boxheight, boxwidth = 0, 0
 
-			if awardCount == 1 then
-				box_wide, box_high, awards_wide, awards_high = 2, 2, 1, 1
-			elseif awardCount == 2 then
-				box_wide, box_high, awards_wide, awards_high = 2, 2, 1, 2
-			elseif awardCount == 3 or awardCount == 4 then
-				box_wide, box_high, awards_wide, awards_high = 2, 2, 2, 2
+			if awardCount <= 4 then
+				rows, cols = 2, 2
 			elseif awardCount <= 6 then
-				box_wide, box_high, awards_wide, awards_high = 2, 3, 2, 3
+				rows, cols = 3, 2
 			else
-				local high = math.ceil(awardCount / 3)
-				box_wide, box_high, awards_wide, awards_high = 3, high, 3, high
+				rows, cols = math.ceil(awardCount / 3), 3
 			end
+			
+			boxwidth = (awardPanelWidth + awardPad) * cols
+			boxheight = (awardPanelHeight + awardPad) * rows + awardPanelLabelHeight
 
-			playerBox = Panel:New {
+			local playerBox = Panel:New {
 				parent = awardSubPanel,
-				width = awardPanelWidth * box_wide + 50,
-				height = (awardPanelHeight + 5) * box_high + 50, -- I need to get this exactly right because otherwise StackPanel will get it wrong
+				width = boxwidth,
+				height = boxheight,
 			}
-			playerLabel = Label:New {
+			local playerLabel = Label:New {
 				parent = playerBox,
 				align = 'center',
 				x=0, y=0,
-				width = awardPanelWidth * box_wide + 50,
+				width = boxwidth,
 				autosize = true,
 				caption = teamNames[teamID],
 				fontSize = 24,
 				fontShadow = true,
 				textColor = teamColors[teamID],
 			}
----[[
-			playerLine = Line:New {
+			local playerLine = Line:New {
 				parent = playerBox,
 				y = 25,
 				width = '70%',
-				x = (awardPanelWidth * box_wide + 50) * .15,
-			}
---]]
-			awardsBox = StackPanel:New {
-				parent = playerBox,
-				x = 0,
-				y = 50,
-				width = '100%',
-				height = '100%',
-				resizeItems = false,
-				centerItems = false,
-				orientation = 'horizontal',
+				x = boxwidth * .15,
 			}
 
+			local award_i = 0
 			for awardType, record in pairs(awards) do
-				awardsBox:AddChild( MakeAwardPanel(awardType, record) )
+				local award = MakeAwardPanel(awardType, record)
+				local award_x = (award_i % cols) * (awardPanelWidth + awardPad)
+				local award_y = math.floor(award_i / cols) * (awardPanelHeight + awardPad) + awardPanelLabelHeight
+				if math.ceil((award_i + 1)/cols) == math.ceil(awardCount/cols) then
+					award_x = award_x + ( (cols - ((awardCount - 1) % cols) - 1) * ((awardPanelWidth + awardPad)/2) )
+				end
+				award.x = award_x
+				award.y = award_y
+				playerBox:AddChild(award)
+				award_i = award_i + 1
 			end
-
---[[
-			Label:New{ caption = teamNames[teamID], width=120; fontShadow = true; valign='center'; autosize=false, height=awardPanelHeight; textColor=teamColors[teamID]; 	parent=awardSubPanel }
-		
-			for awardType, record in pairs(awards) do
-				
-				awardSubPanel:AddChild( MakeAwardPanel(awardType, record) )
-			end
-			
-			Label:New{ caption = string.rep('-', 300), textColor = {0.4,0.4,0.4,0.4}; autosize=false; width='100%'; height=5; parent=awardSubPanel } --spacer label to force a "line break"
---]]
 		end
 	end
 end
@@ -316,7 +326,7 @@ end
 
 local function ShowEndGameWindow()
 --	if WG.awardList then
-	if true then -- TESTING MOCK
+	if true then 			-- TESTING MOCK
 		ShowAwards()
 	else
 		ShowStats()
@@ -368,7 +378,6 @@ local function SetupControls()
 		backgroundColor  = {1,1,1,1},
 		borderColor = {1,1,1,1},
 		padding = {10, 10, 10, 10},
---		itemMargin = {1, 1, 1, 1},
 		tooltip = "",
 		autosize = true,
 		
@@ -377,7 +386,7 @@ local function SetupControls()
 		orientation = 'horizontal';
 
 		itemPadding = {0, 0, 0, 0},
-		itemMargin  = {5, 20, 5, 20},
+		itemMargin  = {10, 25, 10, 25},
 	}
 	
 	local B_HEIGHT = 40
@@ -521,7 +530,7 @@ function widget:Update(dt)
 		return
 	end
 	
-	SetupAwardsPanel() -- TESTING MOCK
+	SetupAwardsPanel() 		-- TESTING MOCK
 	ShowEndGameWindow()
 	showEndgameWindowTimer = nil
 end
