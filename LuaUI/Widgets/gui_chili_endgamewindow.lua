@@ -50,10 +50,15 @@ local showingTab = 'awards'
 local teamNames = {}
 local teamColors = {}
 
-local awardPanelHeight = 50
-local awardPanelWidth = 230
-local awardPanelLabelHeight = 40
-local awardPad = 10
+-- Original values
+-- local awardPanelHeight = 50
+-- local awardPanelWidth = 230
+-- local awardPanelLabelHeight = 40
+-- local awardPad = 10
+local awardPanelHeight = 50 * .8
+local awardPanelWidth = 230 * .8
+local awardPanelLabelHeight = 40 * .8
+local awardPad = 10 * .8
 
 local SELECT_BUTTON_COLOR = {0.98, 0.48, 0.26, 0.85}
 local SELECT_BUTTON_FOCUS_COLOR = {0.98, 0.48, 0.26, 0.85}
@@ -61,6 +66,62 @@ local BUTTON_COLOR
 local BUTTON_FOCUS_COLOR
 
 local awardDescs = VFS.Include("LuaRules/Configs/award_names.lua")
+
+local podium_values = {
+
+	-- The ordering here reflects my completely subjective view
+	-- of the relative recognition-worthiness of each award.
+	-- Remember that in most cases this only matters for tie-breakers
+	-- between people with equal numbers of awards.
+	
+	-- The Big Two
+	-- CA is the objective; it counts double and is the top tie-breaker
+	-- And if you manage to do well while taking the most damage, you deserve extra kudos
+	pwn     = 2.8,		-- 'Complete Annihilation',
+	ouch    = 1.4,		-- 'Big Purple Heart',
+
+	-- In a Chickens game, the Chickens awards take precedence over all the rest
+	heart   = 1.08,		-- 'Queen Heart Breaker',
+	dragon  = 1.04,		-- 'Dragon Slayer',
+	sweeper = 1.02,		-- 'Land Sweeper',
+	
+	-- Then the domain-specific damage-dealers, good job playing those roles
+	navy    = 1.008,	-- 'Fleet Admiral',
+	air     = 1.004,	-- 'Airforce General',
+	
+	-- Then infrastructure and support. Someone's gotta do it.
+	mexkill = 1.0008,	-- 'Loot & Pillage',
+	mex     = 1.0004,	-- 'Mineral Prospector',
+	reclaim = 1.0002,	-- 'Spoils of War',
+	rezz    = 1.0001,	-- 'Vile Necromancer',
+	
+	-- Then the special awards
+	head    = 1.00008,	-- 'Head Hunter',
+	vet     = 1.00004,	-- 'Decorated Veteran',
+	
+	-- And finally, the specific-kind-of-damage awards.
+	-- First by means of delivery
+	nux     = 1.000008,	-- 'Apocalyptic Achievement Award',
+	comm    = 1.000004,	-- 'Master and Commander',
+	shell   = 1.000002,	-- 'Turtle Shell',
+	-- And then by type of damage
+	kam     = 1.0000008,	-- 'Kamikaze Award',
+	cap     = 1.0000004,	-- 'Master of Puppets',
+	emp     = 1.0000002,	-- 'EMP Wizard',
+	slow    = 1.0000001,	-- 'Traffic Cop',
+	fire    = 1.00000008,	-- 'Master Grill-Chef',
+	
+	-- Everyone is now dumber for having played with you.
+	-- I award you no points, and may God have mercy on your soul.
+	friend  = 0,	-- 'Friendly Fire Award',
+	
+	-- Unused but still worth something in case they ever get used again
+	share   = 1,		-- 'Share Bear',
+	terra   = 1,		-- 'Legendary Landscaper',
+	t3      = 1,		-- 'Experimental Engineer',
+	rage    = 1,		-- 'Rage Inducer',
+
+}
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -222,9 +283,9 @@ local mock_awards_d = {
 		shell   = 'Damaged value: 1',
 		fire    = 'Burnt value: 1',
 		emp     = 'Stunned value: 1',
-		slow    = 'Slowed value: 1',
 	},
 	{
+		slow    = 'Slowed value: 1',
 		t3      = 'Experimental Engineer',
 		cap     = 'Captured value: 1',
 		share   = 'Shared value: 1',
@@ -263,7 +324,8 @@ local function SetupAwardsPanel()
 	
 --	local awardList = WG.awardList
 	local awardList = mock_awards_d		-- TESTING MOCK
-
+	
+	-- WIP: Switch this over to sort by podium value, not award count
 	local sortedAwardList = {}
 	for teamID,awards in pairs(awardList) do
 		local awardCount = 0
@@ -274,7 +336,7 @@ local function SetupAwardsPanel()
 	end
 	table.sort(sortedAwardList, function(a,b) return a[3] > b[3] end)
 
-	for _,team in ipairs(sortedAwardList) do
+	for team_i,team in ipairs(sortedAwardList) do
 		
 		local teamID = team[1]
 		local awards = team[2]
@@ -294,11 +356,19 @@ local function SetupAwardsPanel()
 			
 			boxwidth = (awardPanelWidth + awardPad) * cols
 			boxheight = (awardPanelHeight + awardPad) * rows + awardPanelLabelHeight
+			
+			-- WIP: FOCUS ON THIS PART RIGHT HERE
+			-- Okay, all the work will be done here
+			-- Figure out the magic logic that will put each box where it should go
+			box_x = ((team_i - 1) % 2) * 3 * (awardPanelWidth + awardPad + 5)
+			box_y = math.floor((team_i - 1) / 2) * (3 * (awardPanelHeight + awardPad) + awardPanelLabelHeight +5)
 
 			local playerBox = Panel:New {
 				parent = awardSubPanel,
 				width = boxwidth,
 				height = boxheight,
+				x = box_x,
+				y = box_y,
 			}
 			local playerLabel = Label:New {
 				parent = playerBox,
@@ -361,8 +431,10 @@ local function SetupControls()
 		fontSize = 50,
 		x = '20%',
 		y = '20%',
-		width  = '60%',
-		height = '60%',
+--		width  = '60%',
+--		height = '60%',
+		width  = '35%',		-- TESTING MOCK - simulates 1080p on my 4K screen
+		height = '35%',		-- TESTING MOCK - simulates 1080p on my 4K screen
 		classname = "main_window",
 		--autosize   = true;
 		--parent = screen0,
@@ -388,7 +460,19 @@ local function SetupControls()
 		backgroundColor  = {1,1,1,1},
 		borderColor = {1,1,1,1},
 	}
-	
+---[[	
+	awardSubPanel = Panel:New{
+		parent = awardPanel,
+		x=0;y=0;
+		bottom=10;right=10;
+		backgroundColor  = {1,1,1,1},
+		borderColor = {1,1,1,1},
+		padding = {10, 10, 10, 10},
+		tooltip = "",
+		autosize = true,
+	}
+--]]
+--[[
 	awardSubPanel = StackPanel:New{
 		parent = awardPanel,
 		x=0;y=0;
@@ -406,6 +490,7 @@ local function SetupControls()
 		itemPadding = {0, 0, 0, 0},
 		itemMargin  = {10, 25, 10, 25},
 	}
+--]]
 	
 	local B_HEIGHT = 40
 	awardButton = Button:New{
