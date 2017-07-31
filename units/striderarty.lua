@@ -17,11 +17,6 @@ unitDef = {
   corpse                 = [[DEAD]],
 
   customParams           = {
-    description_de = [[Schwerer Raketen-Artillerie Läufer]],
-    description_fr = [[Mechwarrior Lance-Roquette Lourd]],
-    helptext       = [[The Catapult is an MLRS strider. It can launch a volley of rockets that guarantees the destruction of almost anything in the target area, then quickly retreat behind friendly forces.]],
-    helptext_de    = [[Das Catapult ist ein Läufer mit Mehrfachraketenwerfer-Artilleriesystem. Es kann eine Salve von Raketen starten, was die Zerstörung von fast allem im Zielgebiet garantieren kann. Infolgedessen kann es sich schnell in freundliches Gebiet hinter den Fronteinheiten zurückziehen.]],
-    helptext_fr    = [[Le Catapult est le plus fragile des Mechwarriors. Il est cependant trcs rapide et tire un nombre incalculable de roquettes r grande distance grâce r ses deux batteries lance missiles embarquées. Une seule salve peut tapisser une large zone, et rares sont les survivant.]],
   },
 
   explodeAs              = [[ATOMIC_BLASTSML]],
@@ -126,17 +121,17 @@ unitDef = {
     DEAD  = {
       blocking         = true,
       featureDead      = [[HEAP]],
-      footprintX       = 3,
-      footprintZ       = 3,
+      footprintX       = 4,
+      footprintZ       = 4,
       object           = [[catapult_wreck.s3o]],
     },
 
 
     HEAP  = {
       blocking         = false,
-      footprintX       = 3,
-      footprintZ       = 3,
-      object           = [[debris3x3b.s3o]],
+      footprintX       = 4,
+      footprintZ       = 4,
+      object           = [[debris4x4b.s3o]],
     },
 
   },

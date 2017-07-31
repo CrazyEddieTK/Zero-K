@@ -89,7 +89,7 @@ local function AddOption(path, option)
 end
 
 --ShortHand for adding a button
-local function ShButton(path, caption, action2, tooltip, advanced, icon, DisableFunc)
+local function ShButton(path, caption, action2, tooltip, advanced, icon, DisableFunc, bindMod)
 	AddOption(path,
 	{
 		type='button',
@@ -98,6 +98,7 @@ local function ShButton(path, caption, action2, tooltip, advanced, icon, Disable
 		action = (type(action2) == 'string' and action2 or nil),
 		OnChange = (type(action2) ~= 'string' and action2 or nil),
 		key=caption,
+		bindMod = bindMod,
 		advanced = advanced,
 		icon = icon,
 		DisableFunc = DisableFunc or nil, --function that trigger grey colour on buttons (not actually disable their functions, only coloured them grey)
@@ -135,25 +136,20 @@ end
 
 local imgPath = LUAUI_DIRNAME  .. 'images/'
 confdata.subMenuIcons = {
-	['Game'] = imgPath..'epicmenu/game.png',
 	['Settings'] = imgPath..'epicmenu/settings.png',
 	['Help'] = imgPath..'epicmenu/questionmark.png',
 	
-	['Game/Game Speed'] 			= imgPath..'epicmenu/speed-test-icon.png',
-	['Game/New Unit States'] 		= imgPath..'epicmenu/robot2.png',
-	['Game/Unit Behaviour'] 		= imgPath..'epicmenu/robot2.png',
-	['Game/Transport AI'] 			= imgPath..'epicmenu/robot2.png',
-	['Game/Worker AI'] 				= imgPath..'commands/Bold/build_light.png',
-	['Game/Unit Marker'] 			= imgPath..'epicmenu/marker.png',
-	['Game/Construction Hotkeys'] 	= imgPath..'epicmenu/keyboard.png',
-	['Game/Selection Hotkeys'] 		= imgPath..'epicmenu/keyboard.png',
-	['Game/Command Hotkeys'] 		= imgPath..'epicmenu/keyboard.png',
+	['Settings/Unit Behaviour/Worker AI'] = imgPath..'commands/Bold/build_light.png',
+	['Settings/Interface/Unit Marker'] 	= imgPath..'epicmenu/marker.png',
+	['Settings/Unit Behaviour'] 	= imgPath..'epicmenu/robot2.png',
+	['Settings/Hotkeys'] 			= imgPath..'epicmenu/keyboard.png',
 	
 	['Settings/Reset Settings'] 	= imgPath..'epicmenu/undo.png',
 	['Settings/Audio'] 				= imgPath..'epicmenu/vol.png',
 	['Settings/Camera'] 			= imgPath..'epicmenu/video_camera.png',
 	['Settings/Graphics'] 			= imgPath..'epicmenu/graphics.png',
 	['Settings/HUD Panels'] 		= imgPath..'epicmenu/control_panel.png',
+	['Settings/HUD Presets'] 		= imgPath..'epicmenu/speed-test-icon.png',
 	['Settings/Interface'] 			= imgPath..'epicmenu/robotarm.png',
 	['Settings/Misc'] 				= imgPath..'epicmenu/misc.png',
 	
@@ -171,10 +167,12 @@ confdata.subMenuIcons = {
 	['Settings/Interface/Hovering Icons'] 		= imgPath..'epicmenu/halo.png',
 	['Settings/Interface/Selection'] 			= imgPath..'epicmenu/selection.png',
 	['Settings/Interface/Control Groups'] 		= imgPath..'epicmenu/addusergroup.png',
-	
+	['Settings/Interface/Gesture Menu'] 		= imgPath..'epicmenu/stock_brightness.png',
+	['Settings/Interface/Economy Overlay'] 		= imgPath..'energy.png',
+	['Settings/Interface/Falling Units'] 		= imgPath..'advplayerslist/point2.png',
 	
 	['Settings/HUD Panels/Minimap'] 				= imgPath..'epicmenu/map.png',
-	['Settings/HUD Panels/Economy Panel']	 		= imgPath..'cost.png',
+	['Settings/HUD Panels/Economy Panel']	 		= imgPath..'ibeam.png',
 	['Settings/HUD Panels/Commander Selector'] 		= imgPath..'epicmenu/corcommander.png',
 	['Settings/HUD Panels/Tooltip'] 				= imgPath..'epicmenu/lightbulb.png',
 	['Settings/HUD Panels/Chat'] 					= imgPath..'advplayerslist/chat.png',
@@ -185,6 +183,15 @@ confdata.subMenuIcons = {
 	['Settings/HUD Panels/Player List'] 			= imgPath..'epicmenu/people.png',
 	['Settings/HUD Panels/Extras/Docking'] 				= imgPath..'epicmenu/anchor.png',
 	['Settings/HUD Panels/Selected Units Panel'] 	= imgPath..'epicmenu/grid.png',
+}
+
+confdata.simpleModeDirectory = {
+	['Interface'] = true,
+	['Audio'] = true,
+	['Hotkeys'] = true,
+}
+confdata.simpleModeFullDirectory = {
+	'Settings/Hotkeys'
 }
 
 -- SETUP MENU HERE
@@ -229,18 +236,30 @@ local settingsPath = 'Settings'
 	--]]
 
 
---- GAME --- Stuff for gameplay only. Spectator would never need to open this
-local gamePath = 'Game' 
-local gameSpeedPath = 'Game/Game Speed'
+--- Hotkeys --- 
+local hotkeysMiscPath = 'Settings/Hotkeys/Misc' 
 
-	ShButton(gamePath, 'Pause/Unpause', 'pause', nil, nil, imgPath .. 'epicmenu/media_playback_pause.png')
-		ShButton(gameSpeedPath, 'Increase Speed', 'speedup')
-		ShButton(gameSpeedPath, 'Decrease Speed', 'slowdown')
+	ShButton(hotkeysMiscPath, 'Pause/Unpause', 'pause', nil, nil, imgPath .. 'epicmenu/media_playback_pause.png')
+		ShButton(hotkeysMiscPath, 'Increase Speed', 'speedup')
+		ShButton(hotkeysMiscPath, 'Decrease Speed', 'slowdown')
+		ShButton(hotkeysMiscPath, 'Fast Camera Movement', 'movefast', "Increased camera speed while this key is held.", nil, nil, nil, true)
+		ShButton(hotkeysMiscPath, 'Slow Camera Movement', 'moveslow', "Decreased camera speed while this key is held.", nil, nil, nil, true)
 		
-	ShLabel(gamePath, '')
-	ShButton(gamePath, 'Choose Commander Type', (function() spSendCommands{"luaui showstartupinfoselector"} end), nil, nil, imgPath..'epicmenu/corcommander.png' ) 
+	--ShLabel(hotkeysMiscPath, '')
+	ShButton(hotkeysMiscPath, 'Choose Commander Type', (function() spSendCommands{"luaui showstartupinfoselector"} end), nil, nil, imgPath..'epicmenu/corcommander.png' ) 
+	ShButton(hotkeysMiscPath, 'Save Screenshot (PNG)', 'screenshot png', 'Find your screenshots under Spring/screenshots') 
+	ShButton(hotkeysMiscPath, 'Save Screenshot (JPG)', 'screenshot jpg', 'Find your screenshots under Spring/screenshots')
+	ShButton(hotkeysMiscPath, 
+			'Create Video (risky)', 'createvideo', 'Capture video directly from Spring without sound. Gets saved in the Spring folder. '
+			..'Creates a smooth video framerate without ingame stutter. '
+			..'Caution: It\'s safer to use this in windowed mode because the encoder pop-up menu appears in the foreground window, and could crash the game with a "Fatal Error" after a long recording. '
+			..'\n\nRecommendation (especially for low-end PCs): After activating the video recording select the fastest encoder such as Microsoft Video and record the video in segments. '
+			..' You can then use VirtualDub (opensource software) to do futher compression and editing. Note: there is other opensource video capture software like Taksi that you could try.') 
+	ShButton(hotkeysMiscPath, 'Game Info', "gameinfo", '', true)
+	--ShButton(hotkeysMiscPath, 'Share Dialog...', 'sharedialog', '', true)
+	--ShButton(hotkeysMiscPath, 'FPS Control', "controlunit", 'Control a unit directly in FPS mode.', true)
 	
-	--ShButton(gamePath, 'Constructor Auto Assist', function() spSendCommands{"luaui togglewidget Constructor Auto Assist"} end)
+	--ShButton(hotkeysMiscPath, 'Constructor Auto Assist', function() spSendCommands{"luaui togglewidget Constructor Auto Assist"} end)
 
 --- CAMERA ---
 local cameraPath = 'Settings/Camera'
@@ -253,11 +272,11 @@ local cameraPath = 'Settings/Camera'
 	local cofcDisable = "luaui disablewidget Combo Overhead/Free Camera (experimental)"
 	ShRadio( cameraPath,
 		'Camera Type', {
-			{name = 'Total Annihilation',key='Total Annihilation', desc='TA camera', hotkey=nil},
-			{name = 'FPS',key='FPS', desc='FPS camera', hotkey=nil},
-			{name = 'Free',key='Free', desc='Freestyle camera', hotkey=nil},
-			{name = 'Rotatable Overhead',key='Rotatable Overhead', desc='Rotatable Overhead camera', hotkey=nil},
-			{name = 'Total War',key='Total War', desc='TW camera', hotkey=nil},
+			{name = 'Default camera', key='Total Annihilation', desc='Default camera', hotkey=nil},
+			{name = 'FPS',key='FPS', hotkey=nil},
+			{name = 'Free',key='Free', hotkey=nil},
+			{name = 'Rotatable Overhead',key='Rotatable Overhead', hotkey=nil},
+			{name = 'Total War',key='Total War',  hotkey=nil},
 			{name = 'COFC',key='COFC', desc='Combo Overhead/Free Camera', hotkey=nil},
 		},'Total Annihilation',
 		function(self)
@@ -351,19 +370,17 @@ local pathGesture = 'Settings/Interface/Gesture Menu'
   
 --- MISC --- Ungrouped. If some of the settings here can be grouped together, make a new subsection or its own section.
 local pathMisc = 'Settings/Misc'
-	ShButton(pathMisc, 'Local Widget Config', function() spSendCommands{"luaui localwidgetsconfig"} end, '', true)
-	ShButton(pathMisc, 'Game Info', "gameinfo", '', true)
-	ShButton(pathMisc, 'Share Dialog...', 'sharedialog', '', true)
-	ShButton(pathMisc, 'FPS Control', "controlunit", 'Control a unit directly in FPS mode.', true)
 	--ShButton( 'Exit Game...', "exitwindow", '', false ) --this breaks the exitwindow, fixme
 	AddOption(pathMisc,
 	{
-		name = 'Menu pauses in SP',
-		desc = 'Does opening the menu pause the game (and closing unpause it) in single player?',
+		name = 'Show Advanced Settings',
 		type = 'bool',
-		value = true,
-		noHotkey = true,
+		value = false,
+		OnChange = function (self)
+			WG.Epic_SetShowAdvancedSettings(self.value)
+		end,
 	})
+	ShButton(pathMisc, 'Local Widget Config', function() spSendCommands{"luaui localwidgetsconfig"} end, '', true)
 	AddOption(pathMisc,
 	{
 		name = 'Use uikeys.txt',
@@ -382,6 +399,7 @@ local pathMisc = 'Settings/Misc'
 		type = 'bool',
 		value = false,
 		noHotkey = true,
+		advanced = true,
 		OnChange = function (self)
 			local value = (self.value and 1) or 0 --true = 1, false = 0
 			if self.value then
@@ -392,18 +410,8 @@ local pathMisc = 'Settings/Misc'
 			Spring.SetConfigInt("ZKuseOldChili", value); --store in Springsettings.txt because api_chili.lua must read it independent of gui_epicmenu.lua
 		end,
 	})
+	ShButton(pathMisc, 'Toggle Widget Profiler', function() spSendCommands{"luaui togglewidget WidgetProfiler"} end, '', true)
 
-
-local pathMiscScreenshots = 'Settings/Misc/Screenshots'	
-	ShButton(pathMiscScreenshots, 'Save Screenshot (PNG)', 'screenshot png', 'Find your screenshots under Spring/screenshots') 
-	ShButton(pathMiscScreenshots, 'Save Screenshot (JPG)', 'screenshot jpg', 'Find your screenshots under Spring/screenshots')
-	ShButton(pathMiscScreenshots, 
-			'Create Video (risky)', 'createvideo', 'Capture video directly from Spring without sound. Gets saved in the Spring folder. '
-			..'Creates a smooth video framerate without ingame stutter. '
-			..'Caution: It\'s safer to use this in windowed mode because the encoder pop-up menu appears in the foreground window, and could crash the game with a "Fatal Error" after a long recording. '
-			..'\n\nRecommendation (especially for low-end PCs): After activating the video recording select the fastest encoder such as Microsoft Video and record the video in segments. '
-			..' You can then use VirtualDub (opensource software) to do futher compression and editing. Note: there is other opensource video capture software like Taksi that you could try.') 
-	
 --- GRAPHICS --- We might define section as containing anything graphical that has a significant impact on performance and isn't necessary for gameplay
 local pathGraphicsMap = 'Settings/Graphics/Map Detail'
 	
@@ -463,13 +471,13 @@ local pathGraphicsMap = 'Settings/Graphics/Map Detail'
 
 	AddOption(pathGraphicsMap, 
 	{
-		name = 'Terrain geometry detail',
-		desc = 'How detailed the terrain geometry is.',
+		name = 'Terrain detail',
+		desc = 'Control the accuracy of the terrain.',
 		type = 'number',
-		min = 32, 
-		max = 256, 
-		step = 8,
-		value = 128,
+		min = 30, 
+		max = 250, 
+		step = 5,
+		value = 90,
 		OnChange = function(self) spSendCommands{"GroundDetail " .. self.value} end, 
 	})
 
@@ -549,7 +557,9 @@ local pathAudio = 'Settings/Audio'
 		min = 0, 
 		max = 100,
 		springsetting = 'snd_volmaster',
-		OnChange = function(self) spSendCommands{"set snd_volmaster " .. self.value} end
+		OnChange = function(self) spSendCommands{"set snd_volmaster " .. self.value} end,
+		simpleMode = true,
+		everyMode = true,
 	})
 	AddOption(pathAudio,{
 		name = 'Music Volume',
@@ -570,8 +580,21 @@ local pathAudio = 'Settings/Audio'
 			if (prevValue > 0 and self.value <=0) then widgetHandler:DisableWidget("Music Player") end 
 			if (prevValue <=0 and self.value > 0) then widgetHandler:EnableWidget("Music Player") end 
 		end,
+		simpleMode = true,
+		everyMode = true,
 	})
-		
+
+
+--- HUD ETC ---
+AddOption("Settings/HUD Panels/Pause Screen",
+	{
+		name = 'Menu pauses in SP',
+		desc = 'Does opening the menu pause the game (and closing unpause it) in single player?',
+		type = 'bool',
+		value = true,
+		noHotkey = true,
+	})
+
 --- HELP ---
 local pathHelp = 'Help'
 	AddOption(pathHelp,

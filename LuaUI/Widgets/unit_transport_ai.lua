@@ -80,7 +80,7 @@ local unitAICmdDesc = {
 	params 	= {0, 'AI Off','AI On'}
 }
 
-options_path = 'Game/Transport AI'
+options_path = 'Settings/Unit Behaviour/Transport AI'
 options = {
 	transportFromFactory = {
 		name = "Transport From Factory",
@@ -199,7 +199,7 @@ local function ProcessCommand(unitID, cmdID, params, noUsefuless, noPosition)
 	if not (goodCommand[cmdID] or cmdID < 0) then
 		return false
 	end
-	local halting = not (cmdID == CMD.MOVE or cmdID == CMD_RAW_MOVE or cmdID == CMD.WAIT or cmdID == CMD.SET_WANTED_MAX_SPEED)
+	local halting = not (cmdID == CMD.MOVE or cmdID == CMD_RAW_MOVE or cmdID == CMD_RAW_BUILD or cmdID == CMD.WAIT or cmdID == CMD.SET_WANTED_MAX_SPEED)
 	if noPosition or cmdID == CMD.WAIT or cmdID == CMD.SET_WANTED_MAX_SPEED then
 		return true, halting
 	end

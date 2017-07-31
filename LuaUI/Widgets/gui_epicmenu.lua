@@ -148,6 +148,8 @@ local gameInfoText = ''
 	..confdata.description 
 	
 
+local function returnSelf(self) return self end
+
 --------------------------------------------------------------------------------
 -- Key bindings
 -- KEY BINDINGS AND YOU:
@@ -170,9 +172,8 @@ for k,v in pairs(KEYSYMS) do
 	keysyms['' .. k] = v
 end
 --]]
-local get_key = false
-local kb_path
-local kb_action
+local get_key, get_key_bind_mod = false, false
+local kb_path, kb_button, kb_control, kb_option, kb_action
 
 local transkey = include("Configs/transkey.lua")
 
@@ -190,14 +191,17 @@ end
 local keybounditems = {}
 local keybind_date = 0
 
+local EPIC_SETTINGS_VERSION = 51
+
 local settings = {
-	versionmin = 50,
+	versionmin = EPIC_SETTINGS_VERSION,
 	lang = 'en',
 	country = 'wut',
 	widgets = {},
 	show_crudemenu = true,
 	music_volume = 0.5,
-	showAdvanced = false,
+	showAdvanced = false, -- Enable to show all settings.
+	simpleSettingsMode = true,
 }
 
 local confLoaded = false
@@ -536,7 +540,8 @@ local function AllowPauseOnMenuChange()
 	if Spring.GetSpectatingState() then
 		return false
 	end
-	if settings.config['epic_Settings/Misc_Menu_pauses_in_SP'] == false then
+
+	if settings.config['epic_Settings/HUD_Panels/Pause_Screen_Menu_pauses_in_SP'] == false then
 		return false
 	end
 	local playerlist = Spring.GetPlayerList() or {}
@@ -676,7 +681,7 @@ local function MakeFlags()
 	local window_height = 300
 	local window_width = 170
 	window_flags = Window:New{
-		caption = 'Choose Your Location...',
+		caption = 'Choose Your Location',
 		x = settings.sub_pos_x,  
 		y = settings.sub_pos_y,  
 		clientWidth  = window_width,
@@ -991,12 +996,11 @@ local function AddOption(path, option, wname ) --Note: this is used when loading
 
 		option = {
 			type='button',
-			name=pathend .. '...',
+			name=pathend,
 			icon = icon,
 			OnChange = function(self)
 				MakeSubWindow(path2, false)  --this made this button open another menu
 			end,
-			desc=path2,
 			isDirectoryButton = true,
 		}
 		
@@ -1378,12 +1382,16 @@ WG.crude.ShowFlags = function()
 end
 
 --Make little window to indicate user needs to hit a keycombo to save a keybinding
-local function MakeKeybindWindow( path, option, hotkey ) 
+local function MakeKeybindWindow( path, option, hotkeyButton, optionControl, option ) 
 	local window_height = 80
 	local window_width = 300
 	
 	get_key = true
+	get_key_bind_mod = option.bindMod
 	kb_path = path
+	kb_button = hotkeyButton
+	kb_control = optionControl
+	kb_option = option
 	kb_action = GetActionName(path, option)
 	
 	UnassignKeyBind(kb_action, true) -- 2nd param = verbose
@@ -1449,11 +1457,6 @@ local function MakeHotkeyedControl(control, path, option, icon, noHotkey, minHei
 		children[#children+1] = control	
 	else
 		local hotkeystring = GetHotkeyData(path, option)
-		local kbfunc = function() 
-				if not get_key then
-					MakeKeybindWindow( path, option ) 
-				end
-			end
 
 		local hklength = math.max( hotkeystring:len() * 10, 20)
 		local control2 = control
@@ -1470,7 +1473,13 @@ local function MakeHotkeyedControl(control, path, option, icon, noHotkey, minHei
 			right=0,
 			width = hklength,
 			caption = hotkeystring, 
-			OnClick = { kbfunc },
+			OnClick = { 
+				function(self)
+					if not get_key then
+						MakeKeybindWindow( path, option, self, control, option ) 
+					end
+				end
+			},
 			--classname = "submenu_navigation_button",
 			--backgroundColor = color.sub_button_bg,
 			--textColor = color.sub_button_fg, 
@@ -1558,8 +1567,8 @@ local function SearchElement(termToSearch,path)
 			elseif option.type == 'button' then
 				local hide = false
 				
-				if option.desc and option.desc:find(currentPath) and option.name:find("...") then --this type of button is defined in AddOption(path,option,wname) (a link into submenu)
-					local menupath = option.desc
+				if option.isDirectoryButton then --this type of button is defined in AddOption(path,option,wname) (a link into submenu)
+					local menupath = currentPath .. ((currentPath == "") and "" or "/") .. option.name
 					if pathoptions[menupath] then
 						if #pathoptions[menupath] >= 1 and menupath ~= "" then
 							DiggDeeper(menupath) --travel into & search into this branch
@@ -1650,6 +1659,12 @@ local function SearchElement(termToSearch,path)
 	return filtered_pathOptions,tree_children
 end
 
+local function Epic_SetShowAdvancedSettings(newAdvanced)
+	settings.showAdvanced = newAdvanced
+	RemakeEpicMenu()
+end
+
+WG.Epic_SetShowAdvancedSettings = Epic_SetShowAdvancedSettings
 
 -- Make submenu window based on index from flat window list
 MakeSubWindow = function(path, pause)
@@ -1720,9 +1735,21 @@ MakeSubWindow = function(path, pause)
 			option.desc = ''
 		end
 		
+		local simpleModeCull = (not root) and ((not option.simpleMode) == settings.simpleSettingsMode) and (not option.everyMode)
+		if simpleModeCull and confdata.simpleModeFullDirectory then
+			for i = 1, #confdata.simpleModeFullDirectory do
+				if string.find(path, confdata.simpleModeFullDirectory[i]) then
+					simpleModeCull = false
+					break
+				end
+			end
+		end
+		if simpleModeCull and option.isDirectoryButton and confdata.simpleModeDirectory[option.name] then
+			simpleModeCull = false
+		end
 		
 		--if option.advanced and not settings.config['epic_Settings_Show_Advanced_Settings'] then
-		if option.hidden or (option.advanced and not settings.showAdvanced) then
+		if option.hidden or (option.advanced and not settings.showAdvanced) or simpleModeCull then
 			--do nothing
 		elseif option.type == 'button' then
 			local hide = false
@@ -1739,7 +1766,7 @@ MakeSubWindow = function(path, pause)
 				local escapeSearch = searchedElement and option.desc and option.desc:find(currentPath) and option.isDirectoryButton --this type of button will open sub-level when pressed (defined in "AddOption(path, option, wname )")
 				local disabled = option.DisableFunc and option.DisableFunc()
 				local icon = option.icon
-				local button_height = root and 36 or 30
+				local button_height = root and 36 or 36 -- was 30
 				local button = Button:New{
 					name = option.wname .. " " .. option.name;
 					x=0,
@@ -1757,7 +1784,8 @@ MakeSubWindow = function(path, pause)
 				
 				if icon then
 					local width = root and 24 or 16
-					Image:New{ file= icon, width = width, height = width, parent = button, x=4,y=4,  }
+					local pos = root and 4 or 8
+					Image:New{ file= icon, width = width, height = width, parent = button, x = pos, y = pos,}
 				end
 				
 				Label:New{ parent = button, x=35,y=button_height*0.2,  caption=option.name}
@@ -1784,7 +1812,8 @@ MakeSubWindow = function(path, pause)
 			
 		elseif option.type == 'bool' then				
 			local chbox = Checkbox:New{ 
-				x=0,
+				x = 0,
+				y = 7,
 				right = 35,
 				caption = option.name, 
 				checked = option.value or false, 
@@ -1799,39 +1828,39 @@ MakeSubWindow = function(path, pause)
 		elseif option.type == 'number' then	
 			settings_height = settings_height + B_HEIGHT
 			local icon = option.icon
+			local numberPanel = Panel:New{
+				width = "100%",
+				height = 42,
+				backgroundColor = {0,0,0,0},
+				padding = {0,0,0,0},
+				margin = {0,0,0,0},
+				--itemMargin = {2,2,2,2},
+				autosize = false,
+			}
 			if icon then
-				tree_children[#tree_children+1] = Panel:New{
-					backgroundColor = {0,0,0,0},
-					padding = {0,0,0,0},
-					margin = {0,0,0,0},
-					--itemMargin = {2,2,2,2},
-					autosize = true,
-					children = {
-						Image:New{ file= icon, width = 16,height = 16, x=4,y=0,  },
-						Label:New{ caption = option.name, textColor = color.sub_fg, x=20,y=0,  },
-					}
-				}
+				numberPanel:AddChild(Image:New{ file= icon, width = 16,height = 16, x=4,y=7,})
+				numberPanel:AddChild(Label:New{ caption = option.name, textColor = color.sub_fg, x=20,y=7, HitTest = returnSelf, })
 			else
-				tree_children[#tree_children+1] = Label:New{ caption = option.name, textColor = color.sub_fg, }
+				numberPanel:AddChild(Label:New{ padding = {0,0,0,0}, caption = option.name, tooltip = option.desc, y = 7, textColor = color.sub_fg, HitTest = returnSelf, })
 			end
 			if option.valuelist then
 				option.value = GetIndex(option.valuelist, option.value)
 			end
-			tree_children[#tree_children+1] = 
-				Trackbar:New{ 
-					width = "100%",
-					caption = option.name, 
-					value = option.value, 
-					trackColor = color.sub_fg, 
-					min=option.min or 0, 
-					max=option.max or 100, 
-					step=option.step or 1, 
-					OnMouseup = { option.OnChange }, --using onchange triggers repeatedly during slide
-					tooltip=option.desc,
-					--useValueTooltip=true,
-				}
-			
-		elseif option.type == 'list' then	
+			numberPanel:AddChild(Trackbar:New{
+				y = 20,
+				width = "100%",
+				caption = option.name, 
+				value = option.value, 
+				trackColor = color.sub_fg, 
+				min=option.min or 0, 
+				max=option.max or 100, 
+				step=option.step or 1,
+				[option.update_on_the_fly and "OnChange" or "OnMouseup"] = { option.OnChange },
+				useValueTooltip=true,
+				tooltip_format = option.tooltip_format,
+			})
+			tree_children[#tree_children+1] = numberPanel
+		elseif option.type == 'list' then
 			tree_children[#tree_children+1] = Label:New{ caption = option.name, textColor = color.sub_header, }
 			local items = {};
 			for i=1, #option.items do
@@ -1863,11 +1892,13 @@ MakeSubWindow = function(path, pause)
 				local cb = Checkbox:New{
 					--x=0,
 					right = 35,
+					y = 7,
 					caption = '  ' .. item.name, --caption
 					checked = (option.value == item.value), --status
 					OnClick = {function(self) option.OnChange(item) end},
 					textColor = color.sub_fg,
 					tooltip = item.desc, --tooltip
+					round = true,
 				}
 				local icon = option.items[i].icon
 				tree_children[#tree_children+1] = MakeHotkeyedControl( cb, path, item, icon, option.noHotkey)
@@ -1936,14 +1967,14 @@ MakeSubWindow = function(path, pause)
 	
 	window_children[#window_children+1] = Checkbox:New{ 
 		--x=0,
-		width=180;
+		width=125;
 		right = 5,
 		bottom=B_HEIGHT + 5;
 		
-		caption = 'Show Advanced Settings', 
-		checked = settings.showAdvanced, 
+		caption = 'Simple Settings', 
+		checked = settings.simpleSettingsMode, 
 		OnChange = { function(self)
-			settings.showAdvanced = not self.checked
+			settings.simpleSettingsMode = not settings.simpleSettingsMode
 			RemakeEpicMenu()
 		end }, 
 		textColor = color.sub_fg, 
@@ -2522,8 +2553,8 @@ local function MakeMenuBar()
 	
 	-- A bit evil, but par for the course
 	lbl_fps = Label:New{ name='lbl_fps', caption = 'FPS:', textColor = color.sub_header, margin={0,5,0,0}, }
-	lbl_gtime = Label:New{ name='lbl_gtime', caption = 'Time:', width = 55, height=5, textColor = color.sub_header,  }
-	lbl_clock = Label:New{ name='lbl_clock', caption = 'Clock:', width = 45, height=5, textColor = color.main_fg, } -- autosize=false, }
+	lbl_gtime = Label:New{ name='lbl_gtime', caption = '00:00', width = 55, height=5, textColor = color.sub_header,  }
+	lbl_clock = Label:New{ name='lbl_clock', caption = 'Clock', width = 45, height=5, textColor = color.main_fg, } -- autosize=false, }
 	img_flag = Image:New{ tooltip='Choose Your Location', file=":cn:".. LUAUI_DIRNAME .. "Images/flags/".. settings.country ..'.png', width = 16, height = 11, OnClick = { MakeFlags }, padding={4,4,4,6}  }
 	
 	local screen_width,screen_height = Spring.GetWindowGeometry()
@@ -2600,7 +2631,7 @@ local function MakeQuitButtons()
 	})
 	AddOption('',{
 		type='button',
-		name='Resign...',
+		name='Resign',
 		desc = "Abandon team and become spectator",
 		icon = imgPath..'epicmenu/whiteflag.png',
 		OnChange = function()
@@ -2624,7 +2655,7 @@ local function MakeQuitButtons()
 	})
 	AddOption('',{
 		type='button',
-		name='Quit...',
+		name='Quit',
 		desc = "Leave the game.",
 		icon = imgPath..'epicmenu/exit.png',
 		OnChange = function() 
@@ -2733,7 +2764,6 @@ function widget:Initialize()
 
 	--this is done to establish order the correct button order
 	local imgPath = LUAUI_DIRNAME  .. 'images/'
-	AddOption('Game')
 	AddOption('Settings/Reset Settings')
 	AddOption('Settings/Audio')
 	AddOption('Settings/Camera')
@@ -2753,13 +2783,15 @@ function widget:Initialize()
 	MakeQuitButtons()
 	
 	AddOption('',{ type='label',name='',value = '',key='',})
-	AddOption('Game',{
-		type='text',
-		name='About...',
-		value=gameInfoText,
-		--desc = "about game",
-		key='About',
-	})
+	
+	-- About button
+	--AddOption('Settings',{
+	--	type='text',
+	--	name='About',
+	--	value=gameInfoText,
+	--	--desc = "about game",
+	--	key='About',
+	--})
 	
 	-- Clears all saved settings of custom widgets stored in crudemenu's config
 	WG.crude.ResetSettings = function()
@@ -2952,7 +2984,9 @@ function widget:Initialize()
 	
 	--intialize remote menu trigger
 	WG.crude.OpenPath = function(path, pause) --Note: declared here so that it work in local copy
-		MakeSubWindow(path, pause)	-- FIXME should pause the game
+		if not settings.simpleSettingsMode then -- Menus are mostly empty in simpleSettingsMode
+			MakeSubWindow(path, pause) -- FIXME should pause the game
+		end
 	end
 	
 	--intialize remote menu trigger 2
@@ -2965,7 +2999,7 @@ function widget:Initialize()
 	
 	--intialize remote option fetcher
 	WG.GetWidgetOption = function(wname, path, key)  -- still fails if path and key are un-concatenatable
-		return (pathoptions and path and key and wname and pathoptions[path] and otget( pathoptions[path], wname..key ) ) or {}
+		return (pathoptions and path and key and wname and pathoptions[path] and otget( pathoptions[path], wname .. key ) ) or {}
 	end 
 	
 	--intialize remote option setter
@@ -3014,8 +3048,13 @@ end
 function widget:SetConfigData(data)
 	confLoaded = true
 	if (data and type(data) == 'table') then
-		if data.versionmin and data.versionmin >= 50 then
+		if data.versionmin and data.versionmin >= EPIC_SETTINGS_VERSION then
 			settings = data
+		else
+			for key, value in pairs(data) do
+				settings[key] = value
+			end
+			settings.versionmin = EPIC_SETTINGS_VERSION
 		end
 	end
 
@@ -3028,6 +3067,8 @@ function widget:SetConfigData(data)
 		end
 		settings.country = myCountry
 	end
+	
+	settings["epic_Settings/Misc_Show_Advanced_Settings"] = settings.showAdvanced
 
 	WG.country = settings.country
 	WG.lang(settings.lang)
@@ -3070,18 +3111,20 @@ function widget:GameFrame(n)
 end
 
 function widget:KeyPress(key, modifier, isRepeat)
-	if key == KEYSYMS.LCTRL 
-		or key == KEYSYMS.RCTRL 
-		or key == KEYSYMS.LALT
-		or key == KEYSYMS.RALT
-		or key == KEYSYMS.LSHIFT
-		or key == KEYSYMS.RSHIFT
-		or key == KEYSYMS.LMETA
-		or key == KEYSYMS.RMETA
-		or key == KEYSYMS.SPACE
-		then
-		
-		return
+	if not get_key_bind_mod then
+		if key == KEYSYMS.LCTRL 
+			or key == KEYSYMS.RCTRL 
+			or key == KEYSYMS.LALT
+			or key == KEYSYMS.RALT
+			or key == KEYSYMS.LSHIFT
+			or key == KEYSYMS.RSHIFT
+			or key == KEYSYMS.LMETA
+			or key == KEYSYMS.RMETA
+			or key == KEYSYMS.SPACE
+			then
+			
+			return
+		end
 	end
 	
 	local modstring = 
@@ -3094,10 +3137,14 @@ function widget:KeyPress(key, modifier, isRepeat)
 	if get_key then
 		get_key = false
 		window_getkey:Dispose()
+		if get_key_bind_mod then
+			modstring = ''
+			get_key_bind_mod = false
+		end
 		translatedkey = transkey[ keysyms[''..key]:lower() ] or keysyms[''..key]:lower()
-		--local hotkey = { key = translatedkey, mod = modstring, }		
+		--local hotkey = { key = translatedkey, mod = modstring, }
 		translatedkey = translatedkey:gsub("n_", "") -- Remove 'n_' prefix from number keys.
-		local hotkey = modstring .. translatedkey	
+		local hotkey = modstring .. translatedkey
 		
 		Spring.Echo("Binding key code", key, "Translated", translatedkey, "Modifer", modstring)
 		
@@ -3108,8 +3155,15 @@ function widget:KeyPress(key, modifier, isRepeat)
 		end
 		ReApplyKeybinds()
 		
-		if kb_path == curPath then
-			MakeSubWindow(kb_path, false)
+		if kb_path == curPath and kb_button then
+			local hotkeystring = GetHotkeyData(kb_path, kb_option)
+			kb_button:SetCaption(hotkeystring)
+			local hklength = math.max( hotkeystring:len() * 10, 20)
+			if kb_control then
+				kb_button:SetPos(nil, nil, hklength)
+				kb_control._relativeBounds.right = hklength + 2 --room for hotkey button on right side
+				kb_control:UpdateClientArea()
+			end
 		end
 		
 		return true
@@ -3157,7 +3211,7 @@ do --Set our prefered camera mode when first screen frame is drawn. The engine a
 				
 				option.OnChange(option) --re-apply our settings 
 				Spring.Echo("Epicmenu: Switching to " .. option.value .. " camera mode") --notify in log what happen.
-				widgetHandler:RemoveWidgetCallIn("DrawScreen", self) --stop updating "widget:DrawScreen()" event. Note: this is a special "widgetHandler:RemoveCallin" for widget that use "handler=true".
+				widgetHandler:RemoveWidgetCallIn("DrawScreen", self) --stop updating "widget:DrawScreen()" event. Note: this is a special "widgetHandler:RemoveCallIn" for widget that use "handler=true".
 			end
 			screenFrame = screenFrame+1
 		end

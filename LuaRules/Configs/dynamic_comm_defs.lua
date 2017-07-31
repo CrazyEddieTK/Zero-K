@@ -1,4 +1,11 @@
-local skinDefs = VFS.Include("LuaRules/Configs/dynamic_comm_skins.lua")
+
+local skinDefs
+local SKIN_FILE = "LuaRules/Configs/dynamic_comm_skins.lua"
+if VFS.FileExists(SKIN_FILE) then
+	skinDefs = VFS.Include(SKIN_FILE)
+else
+	skinDefs = {}
+end
 
 local UNBOUNDED_LEVEL = true
 local COST_MULT = 1
@@ -468,7 +475,7 @@ local moduleDefs = {
 		description = "S.L.A.M. Rocket - Minature tactical nuke.",
 		image = moduleImagePath .. "commweapon_slamrocket.png",
 		limit = 1,
-		cost = 200 * COST_MULT,
+		cost = 150 * COST_MULT,
 		requireChassis = {"assault", "knight"},
 		requireLevel = 3,
 		slotType = "adv_weapon",
@@ -534,7 +541,7 @@ local moduleDefs = {
 	{
 		name = "weaponmod_napalm_warhead",
 		humanName = "Napalm Warhead",
-		description = "Napalm Warhead - Riot Cannon, Rocket Launcher and Plasma Artillery set targets on fire. Reduced direct damage.",
+		description = "Napalm Warhead - Riot Cannon and Rocket Launcher set targets on fire. Reduced direct damage.",
 		image = moduleImagePath .. "weaponmod_napalm_warhead.png",
 		limit = 1,
 		cost = 350 * COST_MULT,

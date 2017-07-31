@@ -245,32 +245,32 @@ options = {
 		value = false,		
 		noHotkey = true,
 	},
-	lblSelectionIdle = { type='label', name='Idle Units', path='Game/Selection Hotkeys', },
+	lblSelectionIdle = { type='label', name='Idle Units', path='Settings/Hotkeys/Selection', },
 	selectprecbomber = { type = 'button',
 		name = 'Select idle precision bomber',
 		desc = 'Selects an idle, armed precision bomber. Use multiple times to select more. Deselects any units which are not idle, armed precision bombers.',
 		action = 'selectprecbomber',
-		path = 'Game/Selection Hotkeys',
+		path = 'Settings/Hotkeys/Selection',
 		dontRegisterAction = true,
 	},
 	selectidlecon = { type = 'button',
 		name = 'Select idle constructor',
 		desc = 'Selects an idle constructor. Use multiple times to select more. Deselects any units which are not idle constructors.',
 		action = 'selectidlecon',
-		path = 'Game/Selection Hotkeys',
+		path = 'Settings/Hotkeys/Selection',
 		dontRegisterAction = true,
 	},
 	selectidlecon_all = { type = 'button',
 		name = 'Select all idle constructors',
 		action = 'selectidlecon_all',
-		path = 'Game/Selection Hotkeys',
+		path = 'Settings/Hotkeys/Selection',
 		dontRegisterAction = true,
 	},
-	lblSelection = { type='label', name='Commander', path='Game/Selection Hotkeys', },
+	lblSelection = { type='label', name='Commander', path='Settings/Hotkeys/Selection', },
 	selectcomm = { type = 'button',
 		name = 'Select Commander',
 		action = 'selectcomm',
-		path = 'Game/Selection Hotkeys',
+		path = 'Settings/Hotkeys/Selection',
 		dontRegisterAction = true,
 	},
 	horPaddingLeft = {
@@ -342,7 +342,7 @@ options = {
 }
 
 
-local standardFactoryTooltip =  "\n\255\0\255\0" .. WG.Translate("interface", "lmb") .. ": " .. (options.leftMouseCenter.value and WG.Translate("interface", "select_and_go_to") or WG.Translate("interface", "select")) .. "\n" .. WG.Translate("interface", "rmb") .. ": " .. ((not options.leftMouseCenter.value) and WG.Translate("interface", "select_and_go_to") or WG.Translate("interface", "select")) .. "\n" .. WG.Translate("interface", "shift") .. ": " .. WG.Translate("interface", "append_to_current_selection") .. "\008"
+local standardFactoryTooltip =  "\n\255\0\255\0" .. WG.Translate("interface", "lmb") .. ": " .. (options.leftMouseCenter.value and WG.Translate("interface", "select_and_go_to") or WG.Translate("interface", "select")) .. "\n\255\0\255\0" .. WG.Translate("interface", "rmb") .. ": " .. ((not options.leftMouseCenter.value) and WG.Translate("interface", "select_and_go_to") or WG.Translate("interface", "select")) .. "\n\255\0\255\0" .. WG.Translate("interface", "shift") .. ": " .. WG.Translate("interface", "append_to_current_selection") .. "\008"
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -465,7 +465,8 @@ local function SelectIdleCon()
 				if uid ~= "count" then
 					if i == conIndex then
 						Spring.SelectUnitArray({uid})
-						SetCameraTarget(Spring.GetUnitPosition(uid))
+						local x, y, z = Spring.GetUnitPosition(uid)
+						SetCameraTarget(x, y, z)
 						return
 					else
 						i = i + 1
@@ -1113,8 +1114,8 @@ local function GetCommanderButton(parent, unitID, unitDefID, categoryOrder)
 		local tooltip = WG.Translate("interface", "commander") .. ": " .. Spring.Utilities.GetHumanName(UnitDefs[unitDefID], unitID) ..
 			"\n\255\0\255\255" .. WG.Translate("interface", "health") .. ":\008 "..GetHealthColor(health/maxHealth, true)..math.floor(health).."/"..maxHealth.."\008"..
 			"\n\255\0\255\0" .. WG.Translate("interface", "lmb") .. ": " .. (options.leftMouseCenter.value and WG.Translate("interface", "select_and_go_to") or WG.Translate("interface", "select")) ..
-			"\n" .. WG.Translate("interface", "rmb") .. ": " .. ((not options.leftMouseCenter.value) and WG.Translate("interface", "select_and_go_to") or WG.Translate("interface", "select")) ..
-			"\n" .. WG.Translate("interface", "shift") .. ": " .. WG.Translate("interface", "append_to_current_selection") .. "\008"
+			"\n\255\0\255\0" .. WG.Translate("interface", "rmb") .. ": " .. ((not options.leftMouseCenter.value) and WG.Translate("interface", "select_and_go_to") or WG.Translate("interface", "select")) ..
+			"\n\255\0\255\0" .. WG.Translate("interface", "shift") .. ": " .. WG.Translate("interface", "append_to_current_selection") .. "\008"
 	
 		button.SetTooltip(tooltip)
 	end
@@ -1228,7 +1229,7 @@ local function GetConstructorButton(parent)
 
 		button.SetTooltip(WG.Translate("interface", "idle_cons", {count = total}) ..
 						"\n\255\0\255\0" .. WG.Translate("interface", "lmb") .. ": " .. WG.Translate("interface", "select") ..
-						"\n" .. WG.Translate("interface", "rmb") .. ": " .. WG.Translate("interface", "select_all") .. "\008")
+						"\n\255\0\255\0" .. WG.Translate("interface", "rmb") .. ": " .. WG.Translate("interface", "select_all") .. "\008")
 
 		SetActive(total > 0)
 		button.SetBottomLabel(tostring(total))

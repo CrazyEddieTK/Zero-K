@@ -17,11 +17,6 @@ unitDef = {
   corpse                 = [[DEAD]],
 
   customParams           = {
-    description_fr = [[Véicule Pilleur/Éclaireur]],
-	description_de = [[Raider/Aufklärer Fahrzeug]],
-    helptext       = [[Cheap and fast, the Dart is deadly in the first minutes of the game if your opponent is caught off-guard. Use missile towers, LLTs or any quick units to stop them.]],
-    helptext_fr    = [[Le Dart est rapide, aussi bien r construire qu'r rejoindre la base ennemie. Faiblement armée la moindre résistance le réduira en miettes, mais capable de surprendre assez tôt un ennemi non préparé.]],
-	helptext_de    = [[Billig und schnell, damit wird der Dart zur tödlichen Waffe in den ersten fünf Minuten eines Spiels, wenn du deinen Gegner überrumpeln willst. Raketentürme, LLT oder schnelle Einheiten stoppen die Darts.]],
 	modelradius    = [[7]],
   },
 
@@ -41,7 +36,8 @@ unitDef = {
   moveState              = 0,
   noAutoFire             = false,
   noChaseCategory        = [[TERRAFORM FIXEDWING SATELLITE SUB]],
-  objectName             = [[corfav.s3o]],
+  objectName             = [[vehscout.s3o]],
+  script                 = [[vehscout.lua]],
   selfDestructAs         = [[SMALL_UNITEX]],
   sightDistance          = 580,
   trackOffset            = 0,
@@ -115,7 +111,7 @@ unitDef = {
       featureDead      = [[HEAP]],
       footprintX       = 2,
       footprintZ       = 2,
-      object           = [[CORFAV_DEAD.s3o]],
+      object           = [[vehscout_dead.s3o]],
     },
 
     HEAP  = {

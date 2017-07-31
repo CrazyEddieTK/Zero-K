@@ -35,6 +35,7 @@ local spGetUnitTeam     = Spring.GetUnitTeam
 -- Global Variables
 
 local PREDICTION = 30
+local RAW_MOVE_MODE = false
 
 local areaGuardCmd = {
     id      = CMD_AREA_GUARD,
@@ -65,6 +66,11 @@ local oldGuards = {}
 
 local oldcircuitTime = {}
 local newcircuitTime = {}
+local alreadyHandled = {}
+
+local keepOrder = {}
+local nextKeepOrder = {}
+local unitOrder = {}
 
 local circleDirection = {}
 local lastUpdateTime = {}
@@ -178,16 +184,26 @@ local function DoCircleGuard(unitID, unitDefID, teamID, cmdParams, cmdOptions)
 	
 	--// Check command validity
 	if not (ud and targetID and Spring.ValidUnitID(targetID)) then
+		if RAW_MOVE_MODE then
+			GG.RemoveRawMoveUnit(unitID)
+		end
 		return true
 	end
 
 	local targetTeamID = spGetUnitTeam(targetID)
 	if not spAreTeamsAllied(teamID, targetTeamID) then
+		if RAW_MOVE_MODE then
+			GG.RemoveRawMoveUnit(unitID)
+		end
 		return true -- remove
 	end
 	
 	-- Keep factory queue but don't do anything with it.
 	if ud.isFactory then
+		return false
+	end
+	
+	if alreadyHandled[unitID] then
 		return false
 	end
 	
@@ -200,7 +216,7 @@ local function DoCircleGuard(unitID, unitDefID, teamID, cmdParams, cmdOptions)
 	
 	ux, uz = ux + vx*PREDICTION, uz + vz*PREDICTION
 	
-	--// First Circling Guarder dpes some bookkeeping
+	--// First Circling Guarder does some bookkeeping
 	if not (newGuards[targetID] or facing) then
 		-- Update guard circle direction. This swaps whenever there is a gap in which
 		-- no guarders are assigned.
@@ -279,21 +295,42 @@ local function DoCircleGuard(unitID, unitDefID, teamID, cmdParams, cmdOptions)
 		
 		-- Update the number of units in the circle
 		local guards = (oldGuards[targetID] and oldGuards[targetID][radGroup]) or 1
-		local newG = newGuards[targetID][radGroup] or 0
-		newGuards[targetID][radGroup] = newG + 1
+		local circleOrder = newGuards[targetID][radGroup] or 0
+		newGuards[targetID][radGroup] = circleOrder + 1
+		
+		if unitOrder[unitID] and keepOrder[targetID] and keepOrder[targetID][radGroup] then
+			circleOrder = unitOrder[unitID]
+		else
+			unitOrder[unitID] = circleOrder
+		end
+		
+		-- Update whether the number of orbiters has changed
+		if circleOrder == guards - 1 then
+			nextKeepOrder[targetID] = nextKeepOrder[targetID] or {}
+			nextKeepOrder[targetID][radGroup] = true
+		elseif circleOrder >= guards and nextKeepOrder[targetID] and nextKeepOrder[targetID][radGroup] then
+			nextKeepOrder[targetID][radGroup] = false
+		end
 		
 		-- Calculate my own angle
-		angle = ((guardAngle[targetID] and guardAngle[targetID][radGroup]) or 0) + 2*pi*newG/guards
+		angle = ((guardAngle[targetID] and guardAngle[targetID][radGroup]) or 0) + 2*pi*circleOrder/guards
 		perpSize = circleDirection[targetID]*50
 	end
 	
 	--// Set new position
 	local perpAngle = angle + pi/2
 	
-	local mx = ux + radius*cos(angle) + perpSize*cos(perpAngle)
-	local mz = uz + radius*sin(angle) + perpSize*sin(perpAngle)
+	local gX = ux + radius*cos(angle) + perpSize*cos(perpAngle)
+	local gZ = uz + radius*sin(angle) + perpSize*sin(perpAngle)
 	
-	GiveClampedMoveGoalToUnit(unitID, mx, mz)
+	if RAW_MOVE_MODE then
+		local myX, _, myZ = spGetUnitPosition(unitID)
+		GiveClampedMoveGoalToUnit(unitID, gX, gZ, nil, GG.RawMove_IsPathFree(unitDefID, myX, myZ, gX, gZ))
+		GG.AddRawMoveUnit(unitID)
+	else
+		GiveClampedMoveGoalToUnit(unitID, gX, gZ)
+	end
+	alreadyHandled[unitID] = true
 	return false
 end
 
@@ -350,8 +387,12 @@ function gadget:GameFrame(f)
 		oldGuards = newGuards
 		newGuards = {}
 		
+		keepOrder = nextKeepOrder
+		nextKeepOrder = {}
+		
 		oldcircuitTime = newcircuitTime
 		newcircuitTime = {}
+		alreadyHandled = {}
 	end
 end
 
