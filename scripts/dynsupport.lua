@@ -6,6 +6,7 @@ local spSetUnitShieldState = Spring.SetUnitShieldState
 
 -- pieces
 local base = piece 'base' 
+local shield = piece 'shield' 
 local pelvis = piece 'pelvis' 
 local turret = piece 'turret' 
 local torso = piece 'torso' 
@@ -393,6 +394,10 @@ function script.Create()
 	Hide(flare)
 	Hide(ac1)
 	Hide(ac2)
+	
+	Move(nanospray, z_axis, 1*dyncomm.GetScale())
+	Move(nanospray, y_axis, 1.8*dyncomm.GetScale())
+	Move(nanospray, x_axis, 1.5*dyncomm.GetScale())
 
 	StartThread(MotionSpeedControl)
 	StartThread(MotionControl)
@@ -418,7 +423,7 @@ function script.QueryWeapon(num)
 	if dyncomm.GetWeapon(num) == 1 or dyncomm.GetWeapon(num) == 2 then 
 		return flare
 	end
-	return pelvis
+	return shield
 end
 
 local function AimRifle(heading, pitch, isDgun)
@@ -474,7 +479,9 @@ local function AimRifle(heading, pitch, isDgun)
 	Turn(armhold, x_axis, -pitch, math.rad(250))
 	WaitForTurn(turret, y_axis)
 	WaitForTurn(armhold, x_axis) --need to make sure not 
-	WaitForTurn(lloarm, x_axis) --stil setting up
+	WaitForTurn(lloarm, x_axis) --still setting up
+	WaitForTurn(rloarm, y_axis) --still setting up
+	
 	StartThread(RestoreAfterDelay)
 	if isDgun then dgunning = false end
 	return true

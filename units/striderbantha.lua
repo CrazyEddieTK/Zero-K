@@ -1,6 +1,6 @@
 unitDef = {
   unitname               = [[striderbantha]],
-  name                   = [[Bantha]],
+  name                   = [[Paladin]],
   description            = [[Ranged Support Strider]],
   acceleration           = 0.1047,
   brakeRate              = 0.2212,
@@ -96,6 +96,8 @@ unitDef = {
       craterMult              = 0,
       
       customParams            = {
+		burst = Shared.BURST_RELIABLE,
+
 		light_color = [[1.25 0.8 1.75]],
 		light_radius = 320,
       },
@@ -119,7 +121,7 @@ unitDef = {
       reloadtime              = 10,
       rgbColor                = [[0.25 0 1]],
       soundStart              = [[weapon/laser/heavy_laser6]],
-      soundStartVolume        = 3,
+      soundStartVolume        = 15,
       texture1                = [[largelaser]],
       texture2                = [[flare]],
       texture3                = [[flare]],
@@ -216,7 +218,7 @@ unitDef = {
       reloadtime              = 1,
       rgbColor                = [[0.5 0.5 1]],
       soundStart              = [[weapon/LightningBolt]],
-      soundStartVolume        = 2,
+      soundStartVolume        = 3.8,
       soundTrigger            = true,
       sprayAngle              = 800,
       texture1                = [[lightning]],

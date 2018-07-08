@@ -12,14 +12,15 @@ unitDef = {
   buildPic                      = [[turretgauss.png]],
   canMove                       = false,
   category                      = [[SINK TURRET]],
-  collisionVolumeOffsets        = [[0 20 0]],
+  collisionVolumeOffsets        = [[0 5 0]],
   collisionVolumeScales         = [[28 40 28]],
   collisionVolumeType           = [[CylY]],
   corpse                        = [[DEAD]],
 
   customParams                  = {
     modelradius    = [[15]],
-	aimposoffset   = [[0 25 0]],
+    midposoffset   = [[0 15 0]],
+    aimposoffset   = [[0 25 0]],
     armored_regen  = [[20]],
   },
 
@@ -81,6 +82,8 @@ unitDef = {
       craterMult              = 0,
 
       customParams = {
+		burst = Shared.BURST_RELIABLE,
+
         single_hit = true,
       },
 

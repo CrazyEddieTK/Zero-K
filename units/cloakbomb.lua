@@ -1,6 +1,6 @@
 unitDef = {
   unitname               = [[cloakbomb]],
-  name                   = [[Tick]],
+  name                   = [[Imp]],
   description            = [[All Terrain EMP Bomb (Burrows)]],
   acceleration           = 0.25,
   brakeRate              = 0.6,
@@ -11,7 +11,7 @@ unitDef = {
   cloakCost              = 0,
   collisionVolumeOffsets = [[0 0 0]],
   collisionVolumeScales  = [[16 16 16]],
-  collisionVolumeType	 = [[ellipsoid]],
+  collisionVolumeType    = [[ellipsoid]],
   corpse                 = [[DEAD]],
 
   customParams           = {
@@ -97,6 +97,9 @@ local weaponDefs = {
     soundHit           = "weapon/more_lightning",
     damage = {
       default          = 2500,
+    },
+    customParams = {
+      burst = Shared.BURST_UNRELIABLE,
     },
   },
 }

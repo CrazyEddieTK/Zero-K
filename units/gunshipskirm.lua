@@ -1,6 +1,6 @@
 unitDef = {
   unitname               = [[gunshipskirm]],
-  name                   = [[Rapier]],
+  name                   = [[Harpy]],
   description            = [[Multi-Role Support Gunship]],
   acceleration           = 0.152,
   brakeRate              = 0.1216,
@@ -13,8 +13,8 @@ unitDef = {
   category               = [[GUNSHIP]],
   collide                = true,
   collisionVolumeOffsets = [[0 0 0]],
-  collisionVolumeScales  = [[32 32 32]],
-  collisionVolumeType    = [[ellipsoid]],
+  collisionVolumeScales  = [[42 16 42]],
+  collisionVolumeType    = [[cylY]],
   corpse                 = [[DEAD]],
   cruiseAlt              = 140,
 
@@ -72,6 +72,8 @@ unitDef = {
       craterMult              = 0,
 
       customparams = {
+		burst = Shared.BURST_RELIABLE,
+
         timeslow_damagefactor = 3,
 		
 		light_camera_height = 2500,

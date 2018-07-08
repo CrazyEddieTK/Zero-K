@@ -66,6 +66,7 @@ local glPushMatrix       = gl.PushMatrix
 local glTranslate        = gl.Translate
 local glCallList         = gl.CallList
 local glCreateList       = gl.CreateList
+local glDrawCircle
 
 local GL_FRONT_AND_BACK = GL.FRONT_AND_BACK
 local GL_FILL           = GL.FILL
@@ -86,8 +87,6 @@ local myAllyTeam = spGetMyAllyTeamID()
 
 local mapX = Game.mapSizeX
 local mapZ = Game.mapSizeZ
-local mapXinv = 1/mapX
-local mapZinv = 1/mapZ
 
 local METAL_MAP_SQUARE_SIZE = 16
 local MEX_RADIUS = Game.extractorRadius
@@ -149,6 +148,7 @@ options = {
 local mexDefID = UnitDefNames["staticmex"].id
 local lltDefID = UnitDefNames["turretlaser"].id
 local solarDefID = UnitDefNames["energysolar"].id
+local windDefID = UnitDefNames["energywind"].id
 
 local mexUnitDef = UnitDefNames["staticmex"]
 local mexDefInfo = {
@@ -186,6 +186,9 @@ local spotData = {}
 
 local wasSpectating = spGetSpectatingState()
 local metalSpotsNil = true
+
+local metalmult = tonumber(Spring.GetModOptions().metalmult) or 1
+local metalmultInv = metalmult > 0 and (1/metalmult) or 1
 
 ------------------------------------------------------------
 -- Functions
@@ -285,7 +288,6 @@ end
 
 function widget:CommandNotify(cmdID, params, options)
 	if (cmdID == CMD_AREA_MEX and WG.metalSpots) then
-
 		local cx, cy, cz, cr = params[1], params[2], params[3], math.max((params[4] or 60),60)
 
 		local xmin = cx-cr
@@ -322,11 +324,13 @@ function widget:CommandNotify(cmdID, params, options)
 			aveX = ux/us
 			aveZ = uz/us
 		end
+		
+		local makeMexEnergy = options.alt
 
 		for i = 1, #WG.metalSpots do
 			local mex = WG.metalSpots[i]
 			--if (mex.x > xmin) and (mex.x < xmax) and (mex.z > zmin) and (mex.z < zmax) then -- square area, should be faster
-			if (Distance(cx,cz,mex.x,mex.z) < cr*cr) then -- circle area, slower
+			if (Distance(cx, cz, mex.x, mex.z) < cr*cr) and (makeMexEnergy or IsSpotBuildable(i)) then -- circle area, slower
 				commands[#commands+1] = {x = mex.x, z = mex.z, d = Distance(aveX,aveZ,mex.x,mex.z)}
 			end
 		end
@@ -357,7 +361,7 @@ function widget:CommandNotify(cmdID, params, options)
 				end
 			end
 			--prepare command list
-			if not shift then
+			if not (options.meta or shift) then
 				commandArrayToIssue[1] = {CMD.STOP, {} , {}}
 			end
 			for i, command in ipairs(orderedCommands) do
@@ -370,23 +374,31 @@ function widget:CommandNotify(cmdID, params, options)
 					commandArrayToIssue[#commandArrayToIssue+1] = {-mexDefID, {x,y,z,0} , {"shift"}}
 				end
 
-				if (options["alt"]) then
+				if makeMexEnergy then
 					for i=1, #addons do
 						local addon = addons[i]
 						local xx = x+addon[1]
 						local zz = z+addon[2]
 						local yy = Spring.GetGroundHeight(xx, zz)
+						local buildDefID = (Spring.TestBuildOrder(solarDefID, xx, yy, zz, 0) == 0 and windDefID) or solarDefID
 
 						-- check if some other widget wants to handle the command before sending it to units.
-						if not WG.GlobalBuildCommand or not WG.GlobalBuildCommand.CommandNotifyMex(-solarDefID, {xx, yy, zz, 0}, options, true) then
-							commandArrayToIssue[#commandArrayToIssue+1] = {-solarDefID, {xx,yy,zz,0}, {"shift"}}
+						if not WG.GlobalBuildCommand or not WG.GlobalBuildCommand.CommandNotifyMex(-buildDefID, {xx, yy, zz, 0}, options, true) then
+							commandArrayToIssue[#commandArrayToIssue+1] = {-buildDefID, {xx,yy,zz,0}, {"shift"}}
 						end
 					end
 				end
 			end
-
-			if (#commandArrayToIssue > 0) then
-				Spring.GiveOrderArrayToUnitArray(unitArrayToReceive,commandArrayToIssue)
+			
+			if options.meta then
+				for i = #commandArrayToIssue, 1, -1 do
+					local command = commandArrayToIssue[i]
+					WG.CommandInsert(command[1], command[2], options)
+				end
+			else
+				if (#commandArrayToIssue > 0) then
+					Spring.GiveOrderArrayToUnitArray(unitArrayToReceive, commandArrayToIssue)
+				end
 			end
 		end
 
@@ -627,14 +639,14 @@ local centerZ
 local extraction = 0
 
 local mainMexDrawList = 0
-local miniMexDrawList = 0
+local circleOnlyMexDrawList = 0
 
 local function getSpotColor(id)
 	local teamID = spotData[id] and spotData[id].team or Spring.GetGaiaTeamID()
 	return Spring.GetTeamColor(teamID)
 end
 
-function calcMainMexDrawList()
+function calcMainMexDrawList(onlyDrawCircle)
 	local specatate = spGetSpectatingState()
 
 	if WG.metalSpots then
@@ -645,8 +657,8 @@ function calcMainMexDrawList()
 			if y < 0 then y = 0 end
 
 			local r, g, b = getSpotColor(i)
-			local metal = spot.metal
-
+			local width = (spot.metal > 0 and spot.metal) or 0.1
+			width = width * metalmultInv
 
 			glPushMatrix()
 
@@ -654,10 +666,10 @@ function calcMainMexDrawList()
 
 			glColor(0,0,0,0.7)
 			-- glDepthTest(false)
-			glLineWidth(spot.metal*2.4)
+			glLineWidth(width*2.4)
 			glDrawGroundCircle(x, 1, z, 40, 21)
 			glColor(r,g,b,0.7)
-			glLineWidth(spot.metal*1.5)
+			glLineWidth(width*1.5)
 			glDrawGroundCircle(x, 1, z, 40, 21)
 
 			--glColor(0,1,1)
@@ -667,52 +679,9 @@ function calcMainMexDrawList()
 		end
 
 		glColor(1,1,1)
-		glTexture("LuaUI/Images/ibeam.png")
-		glDepthTest(false)
-		for i = 1, #WG.metalSpots do
-			local spot = WG.metalSpots[i]
-			local x,z = spot.x, spot.z
-			local y = spGetGroundHeight(x,z)
-			if y < 0 then y = 0 end
-
-			local metal = spot.metal
-
-			glPushMatrix()
-
-			if options.drawicons.value then
-				local size = 1
-				if metal > 10 then
-					if metal > 100 then
-						metal = metal*0.01
-						size = 5
-					else
-						metal = metal*0.1
-						size = 2.5
-					end
-				end
-
-				size = options.size.value
-
-				glRotate(90,1,0,0)
-				glTranslate(0,0,-y-10)
-
-
-				local width = metal*size
-				glTexRect(x-width/2, z+40, x+width/2, z+40+size,0,0,metal,1)
-			else
-				-- Draws a metal bar at the center of the metal spot
-				glRotate(90,1,0,0)
-				glTranslate(0,0,-y)
-
-				glTexRect(x-25, z-25, x+25, z+25,0,0,1,1)
-			end
-
-			glPopMatrix()
-		end
-		glTexture(false)
-
-		if not options.drawicons.value then
-			--glColor(1,1,1) --already set
+		if not onlyDrawCircle then
+			glTexture("LuaUI/Images/ibeam.png")
+			glDepthTest(false)
 			for i = 1, #WG.metalSpots do
 				local spot = WG.metalSpots[i]
 				local x,z = spot.x, spot.z
@@ -723,12 +692,57 @@ function calcMainMexDrawList()
 
 				glPushMatrix()
 
-				glTranslate(x, y, z)
-				glRotate(-90, 1, 0, 0)
-				glTranslate(0, -40 - options.size.value, 0)
-				glText("+" .. ("%."..options.rounding.value.."f"):format(metal), 0.0, 0.0, options.size.value , "cno")
+				if options.drawicons.value then
+					local size = 1
+					if metal > 10 then
+						if metal > 100 then
+							metal = metal*0.01
+							size = 5
+						else
+							metal = metal*0.1
+							size = 2.5
+						end
+					end
+
+					size = options.size.value
+
+					glRotate(90,1,0,0)
+					glTranslate(0,0,-y-10)
+
+
+					local width = metal*size
+					glTexRect(x-width/2, z+40, x+width/2, z+40+size,0,0,metal,1)
+				else
+					-- Draws a metal bar at the center of the metal spot
+					glRotate(90,1,0,0)
+					glTranslate(0,0,-y)
+
+					glTexRect(x-25, z-25, x+25, z+25,0,0,1,1)
+				end
 
 				glPopMatrix()
+			end
+			glTexture(false)
+		
+			if not options.drawicons.value then
+				--glColor(1,1,1) --already set
+				for i = 1, #WG.metalSpots do
+					local spot = WG.metalSpots[i]
+					local x,z = spot.x, spot.z
+					local y = spGetGroundHeight(x,z)
+					if y < 0 then y = 0 end
+
+					local metal = spot.metal
+
+					glPushMatrix()
+
+					glTranslate(x, y, z)
+					glRotate(-90, 1, 0, 0)
+					glTranslate(0, -40 - options.size.value, 0)
+					glText("+" .. ("%."..options.rounding.value.."f"):format(metal), 0.0, 0.0, options.size.value , "cno")
+
+					glPopMatrix()
+				end
 			end
 		end
 
@@ -772,15 +786,23 @@ function updateMexDrawList()
 	end
 
 	if (mainMexDrawList) then
-		gl.DeleteList(mainMexDrawList);
+		gl.DeleteList(mainMexDrawList)
 		mainMexDrawList = nil
-	end --delete previous list if exist (ref:gui_chicken.lua by quantum)
+	end
+	if (circleOnlyMexDrawList) then
+		gl.DeleteList(circleOnlyMexDrawList)
+		circleOnlyMexDrawList = nil
+	end
 	mainMexDrawList = glCreateList(calcMainMexDrawList)
-	--miniMexDrawList = glCreateList(calcMiniMexDrawList)
+	circleOnlyMexDrawList = glCreateList(calcMainMexDrawList, true)
+	if not mainMexDrawList then
+		Spring.Echo("Warning: Failed to update mex draw list.")
+	end
 end
 
 function widget:Shutdown()
 	gl.DeleteList(mainMexDrawList)
+	gl.DeleteList(circleOnlyMexDrawList)
 end
 
 local function DoLine(x1, y1, z1, x2, y2, z2)
@@ -789,6 +811,9 @@ local function DoLine(x1, y1, z1, x2, y2, z2)
 end
 
 function widget:DrawWorldPreUnit()
+	if Spring.IsGUIHidden() then
+		return false
+	end
 
 	-- Check command is to build a mex
 	local _, cmdID = spGetActiveCommand()
@@ -797,11 +822,15 @@ function widget:DrawWorldPreUnit()
 
 	drawMexSpots = WG.metalSpots and (-mexDefID == cmdID or CMD_AREA_MEX == cmdID or peruse)
 
-	if drawMexSpots then
+	if drawMexSpots or WG.showeco_always_mexes then
 
 			gl.DepthTest(true)
 			gl.DepthMask(true)
-		glCallList(mainMexDrawList)
+			if drawMexSpots then
+				glCallList(mainMexDrawList)
+			else
+				glCallList(circleOnlyMexDrawList)
+			end
 
 			gl.DepthTest(false)
 			gl.DepthMask(false)
@@ -809,11 +838,15 @@ function widget:DrawWorldPreUnit()
 end
 
 function widget:DrawWorld()
+	if Spring.IsGUIHidden() then
+		return false
+	end
 
 	-- Check command is to build a mex
 	local _, cmdID = spGetActiveCommand()
-	local showecoMode = WG.showeco
-	local peruse = spGetGameFrame() < 1 or showecoMode or spGetMapDrawMode() == 'metal'
+	local showecoMode = WG.showeco or WG.showeco_always_mexes
+	local pregame = (spGetGameFrame() < 1)
+	local peruse = pregame or showecoMode or spGetMapDrawMode() == 'metal'
 
 
 	local mx, my = spGetMouseState()
@@ -821,12 +854,15 @@ function widget:DrawWorld()
 
 	mexSpotToDraw = false
 
-	if WG.metalSpots and pos and (-mexDefID == cmdID or peruse or CMD_AREA_MEX == cmdID) then
+	if WG.metalSpots and pos and (pregame or WG.selectionEntirelyCons) and (-mexDefID == cmdID or peruse or CMD_AREA_MEX == cmdID) then
 
 		-- Find build position and check if it is valid (Would get 100% metal)
 		local bx, by, bz = Spring.Pos2BuildPos(mexDefID, pos[1], pos[2], pos[3])
 		local bface = Spring.GetBuildFacing()
 		local closestSpot, distance, index = GetClosestMetalSpot(bx, bz)
+		if -mexDefID ~= cmdID then
+			bx, by, bz = pos[1], pos[2], pos[3]
+		end
 
 		if closestSpot and (-mexDefID == cmdID or not ((CMD_AREA_MEX == cmdID or peruse) and distance > 60)) and IsSpotBuildable(index) then
 
@@ -866,25 +902,20 @@ function widget:DefaultCommand(type, id)
 	end
 end
 
-function widget:DrawInMiniMap()
-
-	if drawMexSpots then
-		--[[
-		glPushMatrix()
-			glLoadIdentity()
-			glTranslate(0, 1, 0)
-			glScale(mapXinv , -mapZinv, 1)
-
-			widget:DrawWorld()
-		glPopMatrix()
-		--]]
+function widget:DrawInMiniMap(minimapX, minimapY)
+	if not WG.metalSpots then
+		return
+	end
+	if drawMexSpots or WG.showeco_always_mexes then
+		if not glDrawCircle then
+			glDrawCircle = gl.Utilities.DrawCircle
+		end
 
 		local specatate = spGetSpectatingState()
 
-		glLoadIdentity()
-		glTranslate(0,1,0)
-		glScale(mapXinv , -mapZinv, 1)
-		glRotate(270,1,0,0)
+		glPushMatrix()
+		glTranslate(0,minimapY,0)
+		glScale(minimapX/mapX, -minimapY/mapZ, 1)
 
 		for i = 1, #WG.metalSpots do
 			local spot = WG.metalSpots[i]
@@ -892,22 +923,23 @@ function widget:DrawInMiniMap()
 			local y = spGetGroundHeight(x,z)
 
 			local r,g,b = getSpotColor(i)
+			local width = (spot.metal > 0 and spot.metal) or 0.1
+			width = width * metalmultInv
 
 			glLighting(false)
 			glColor(0,0,0,1)
-			glLineWidth(((spot.metal > 0 and spot.metal) or 0.1)*2.0)
-			glDrawGroundCircle(x, 0, z, MINIMAP_DRAW_SIZE, 32)
-			glLineWidth((spot.metal > 0 and spot.metal) or 0.1)
+			glLineWidth(width*2.0)
+			glDrawCircle(x, z, MINIMAP_DRAW_SIZE)
+			glLineWidth(width*0.8)
 			glColor(r,g,b,1.0)
 
-			glDrawGroundCircle(x, 0, z, MINIMAP_DRAW_SIZE, 32)
+			glDrawCircle(x, z, MINIMAP_DRAW_SIZE)
 		end
 
 		glLineWidth(1.0)
 		glColor(1,1,1,1)
-
+		glPopMatrix()
 	end
-
 end
 
 --[[

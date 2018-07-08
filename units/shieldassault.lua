@@ -11,9 +11,13 @@ unitDef = {
   canMove             = true,
   canPatrol           = true,
   category            = [[LAND]],
+  selectionVolumeOffsets = [[0 0 0]],
+  selectionVolumeScales  = [[45 45 45]],
+  selectionVolumeType    = [[ellipsoid]],
   corpse              = [[DEAD]],
 
   customParams        = {
+    shield_emit_height = 17,
   },
 
   explodeAs           = [[BIG_UNITEX]],
@@ -89,10 +93,8 @@ unitDef = {
       shieldRepulser          = false,
       shieldStartingPower     = 850,
       smartShield             = true,
-      texture1                = [[shield3mist]],
-      visibleShield           = true,
-      visibleShieldHitFrames  = 4,
-      visibleShieldRepulse    = true,
+      visibleShield           = false,
+      visibleShieldRepulse    = false,
       weaponType              = [[Shield]],
     },
 

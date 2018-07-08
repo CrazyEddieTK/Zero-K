@@ -1,6 +1,6 @@
 unitDef = {
   unitname               = [[tankheavyraid]],
-  name                   = [[Panther]],
+  name                   = [[Blitz]],
   description            = [[Lightning Assault/Raider Tank]],
   acceleration           = 0.125,
   brakeRate              = 0.1375,
@@ -18,10 +18,9 @@ unitDef = {
 
   customParams           = {
 	modelradius    = [[10]],
-	stats_show_death_explosion = 1,
   },
 
-  explodeAs              = [[PANTHER_DEATH]],
+  explodeAs              = [[BIG_UNITEX]],
   footprintX             = 3,
   footprintZ             = 3,
   iconType               = [[tankraider]],
@@ -38,7 +37,7 @@ unitDef = {
   noChaseCategory        = [[TERRAFORM FIXEDWING SATELLITE SUB]],
   objectName             = [[corseal.s3o]],
   script                 = [[tankheavyraid.lua]],
-  selfDestructAs         = [[PANTHER_DEATH]],
+  selfDestructAs         = [[BIG_UNITEX]],
 
   sfxtypes               = {
 
@@ -52,7 +51,7 @@ unitDef = {
   trackStrength          = 5,
   trackStretch           = 1,
   trackType              = [[StdTank]],
-  trackWidth             = 30,
+  trackWidth             = 32,
   turninplace            = 0,
   turnRate               = 616,
   workerTime             = 0,
@@ -77,6 +76,8 @@ unitDef = {
       craterMult              = 0,
 
       customParams            = {
+		burst = Shared.BURST_RELIABLE,
+
         extra_damage = 500,
 		
 		light_camera_height = 1600,
@@ -87,7 +88,7 @@ unitDef = {
       cylinderTargeting      = 0,
 
       damage                  = {
-        default        = 190,
+        default        = 180,
       },
 
       duration                = 10,
@@ -99,8 +100,8 @@ unitDef = {
       intensity               = 12,
       interceptedByShieldType = 1,
       paralyzeTime            = 1,
-      range                   = 260,
-      reloadtime              = 3,
+      range                   = 245,
+      reloadtime              = 2.7,
       rgbColor                = [[0.5 0.5 1]],
       soundStart              = [[weapon/more_lightning_fast]],
       soundTrigger            = true,
@@ -118,6 +119,7 @@ unitDef = {
 			craterMult = 0,
 			edgeEffectiveness = 0,
 			explosionGenerator = [[custom:cloakbomb_EXPLOSION]],
+			explosionSpeed = 10000,
 			fireStarter = 0,
 			impulseBoost = 0,
 			impulseFactor = 0,

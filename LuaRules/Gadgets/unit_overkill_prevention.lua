@@ -37,6 +37,7 @@ local spGetUnitShieldState  = Spring.GetUnitShieldState
 local pmap = VFS.Include("LuaRules/Utilities/pmap.lua")
 
 local DECAY_FRAMES = 1200 -- time in frames it takes to decay 100% para to 0 (taken from unit_boolean_disable.lua)
+local HEALTH_FRAME_TIMEOUT = 300 -- 10 seconds.
 
 local FAST_SPEED = 5.5*30 -- Speed which is considered fast.
 local fastUnitDefs = {}
@@ -49,6 +50,9 @@ end
 local canHandleUnit = {}
 local units = {}
 local lastShot = {} -- List of the last targets, to stop target switching
+local lastHealth = {}
+local lastHealthFrame = {}
+local lastGain = {}
 
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
@@ -58,6 +62,7 @@ local HandledUnitDefIDs = {
 	[UnitDefNames["turretmissile"].id] = 1,
 	[UnitDefNames["turretaafar"].id] = 1,
 	[UnitDefNames["hoverskirm"].id] = 1,
+	[UnitDefNames["hoverdepthcharge"].id] = 1,
 	[UnitDefNames["turretaaclose"].id] = 1,
 	[UnitDefNames["turretaaheavy"].id] = 1,
 	[UnitDefNames["amphaa"].id] = 1,
@@ -80,6 +85,8 @@ local HandledUnitDefIDs = {
 	[UnitDefNames["shiptorpraider"].id] = 1,
 	[UnitDefNames["shipskirm"].id] = 1,
 	[UnitDefNames["subraider"].id] = 1,
+	[UnitDefNames["turretheavylaser"].id] = 1,
+	[UnitDefNames["amphassault"].id] = 1,
 
 	-- Static only OKP below
 	[UnitDefNames["amphfloater"].id] = 1,
@@ -92,6 +99,7 @@ local HandledUnitDefIDs = {
 	[UnitDefNames["striderdetriment"].id] = 1,
 	[UnitDefNames["shipassault"].id] = 1,
 	[UnitDefNames["shiparty"].id] = 1,
+	[UnitDefNames["spiderskirm"].id] = 1,
 
 	-- Needs LUS
 	--[UnitDefNames["tankassault"].id] = 1,
@@ -158,6 +166,34 @@ local function IsUnitIdentifiedStructure(identified, unitID)
 	return not Spring.Utilities.getMovetype(UnitDefs[unitDefID])
 end
 
+local function GetRepairModifiedHealth(targetID, health, gameFrame, timeout)
+	if lastHealthFrame[targetID] and (gameFrame - lastHealthFrame[targetID]) > HEALTH_FRAME_TIMEOUT then
+		lastHealth[targetID] = false
+		lastHealthFrame[targetID] = false
+		lastGain[targetID] = false
+	end
+
+	if not lastHealth[targetID] then
+		lastHealth[targetID] = health
+		lastHealthFrame[targetID] = gameFrame
+		return health
+	end
+
+	local lastHealthAge = (gameFrame - lastHealthFrame[targetID])
+	local gain = health - lastHealth[targetID]
+
+	if lastHealthAge > 2 then
+		lastHealth[targetID] = health
+		lastHealthFrame[targetID] = gameFrame
+	end
+
+	if (lastGain[targetID] or 0)/2 + gain > 0.01 then
+		health = health + timeout*(gain + (lastGain[targetID] or 0))/(lastHealthAge + 2)
+		lastGain[targetID] = (lastGain[targetID] or 0)/2 + gain
+	end
+	return health
+end
+
 --[[
 	unitID, targetID - unit IDs. Self explainatory
 	fullDamage - regular damage of salvo
@@ -194,8 +230,9 @@ local function CheckBlockCommon(unitID, targetID, gameFrame, fullDamage, disarmD
 
 	local adjHealth, disarmFrame
 	if targetInLoS then
-		local armor = select(2,Spring.GetUnitArmored(targetID)) or 1
-		adjHealth = spGetUnitHealth(targetID)/armor -- adjusted health after incoming damage is dealt
+		local armored, armorMultiple = Spring.GetUnitArmored(targetID)
+		local armor = ((armored and armorMultiple) or 1)
+		adjHealth = GetRepairModifiedHealth(targetID, spGetUnitHealth(targetID), gameFrame, timeout)/armor
 
 		if shieldPowerDef[unitDefID] then
 			local shieldEnabled, currentPower = spGetUnitShieldState(targetID)
@@ -285,8 +322,10 @@ local function CheckBlockCommon(unitID, targetID, gameFrame, fullDamage, disarmD
 				local cmd = queue[1]
 				if (cmd.id == CMD.ATTACK) and (cmd.options.internal) and (#cmd.params == 1 and cmd.params[1] == targetID) then
 					--Spring.Echo("Removing auto-attack command")
-					spGiveOrderToUnit(unitID, CMD.REMOVE, {cmd.tag}, {} )
-					--Spring.GiveOrderToUnit(unitID, CMD.STOP, {}, {} )
+					GG.recursion_GiveOrderToUnit = true
+					spGiveOrderToUnit(unitID, CMD.REMOVE, {cmd.tag}, 0 )
+					GG.recursion_GiveOrderToUnit = false
+					--Spring.GiveOrderToUnit(unitID, CMD.STOP, {}, 0 )
 				end
 			else
 				spSetUnitTarget(unitID, 0)
@@ -324,12 +363,6 @@ function GG.OverkillPrevention_CheckBlock(unitID, targetID, damage, timeout, fas
 		return CheckBlockCommon(unitID, targetID, gameFrame, damage, 0, 0, timeout, fastMult, radarMult, staticOnly)
 	end
 	return false
-end
-
-function gadget:UnitDestroyed(unitID)
-	if incomingDamage[unitID] then
-		incomingDamage[unitID] = nil
-	end
 end
 
 --------------------------------------------------------------------------------
@@ -390,6 +423,10 @@ function gadget:UnitDestroyed(unitID)
 		end
 		canHandleUnit[unitID] = nil
 	end
+	incomingDamage[unitID] = nil
+	lastHealth[unitID] = nil
+	lastHealthFrame[unitID] = nil
+	lastGain[unitID] = nil
 end
 
 function gadget:Initialize()

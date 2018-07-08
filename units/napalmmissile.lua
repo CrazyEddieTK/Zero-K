@@ -15,6 +15,7 @@ unitDef = {
   collisionVolumeType	        = [[CylY]],
 
   customParams                  = {
+    mobilebuilding = [[1]],
   },
 
   explodeAs                     = [[WEAPON]],
@@ -98,7 +99,7 @@ unitDef = {
       reloadtime              = 10,
       smokeTrail              = false,
       soundHit                = [[weapon/missile/nalpalm_missile_hit]],
-      soundStart              = [[weapon/missile/tacnuke_launch]],
+      soundStart              = [[weapon/missile/tacnuke_launch2_trimmed]],
       tolerance               = 4000,
       turnrate                = 18000,
       weaponAcceleration      = 180,

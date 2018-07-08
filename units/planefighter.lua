@@ -15,6 +15,9 @@ unitDef = {
   collisionVolumeOffsets = [[0 0 5]],
   collisionVolumeScales  = [[25 8 40]],
   collisionVolumeType    = [[box]],
+  selectionVolumeOffsets = [[0 0 10]],
+  selectionVolumeScales  = [[50 50 70]],
+  selectionVolumeType    = [[cylZ]],
   corpse                 = [[DEAD]],
   crashDrag              = 0.02,
   cruiseAlt              = 200,
@@ -147,6 +150,8 @@ unitDef = {
       cylinderTargeting       = 6,
 
 	  customParams        	  = {
+		burst = Shared.BURST_RELIABLE,
+
 		isaa = [[1]],
 		light_color = [[0.5 0.6 0.6]],
 	  },

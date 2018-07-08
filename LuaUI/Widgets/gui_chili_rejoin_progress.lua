@@ -57,6 +57,10 @@ function widget:GameStart()
 	running = true
 end
 
+function widget:GameOver()
+	widgetHandler:RemoveCallIn("Update")
+end
+
 local function ParseFrameTime(frames)
 	local secs = math.floor(frames / gameSpeed)
 	local h = math.floor(secs / 3600)
@@ -120,7 +124,7 @@ function widget:Update (dt)
 		local etaFrames = framesLeft / avgCatchupRatePerFrame
 		label_title:SetCaption("Catching up, ETA: " .. ParseFrameTime(etaFrames))
 	else
-		label_title:SetCaption("Catching up, low performance.")
+		label_title:SetCaption("Catching up, ETA: unknown")
 	end
 end
 

@@ -161,9 +161,25 @@ local moveDefs = {
 		depthmodparams = common_depthmodparams,
 	},
 	
+	HOVER2 = {
+		footprintx = 2,
+		footprintz = 2,
+		maxslope = 18,
+		maxwaterdepth = 5000,
+		slopemod = 40,
+		crushstrength = 50,
+	},
 	HOVER3 = {
 		footprintx = 3,
 		footprintz = 3,
+		maxslope = 18,
+		maxwaterdepth = 5000,
+		slopemod = 40,
+		crushstrength = 50,
+	},
+	HOVER4 = {
+		footprintx = 4,
+		footprintz = 4,
 		maxslope = 18,
 		maxwaterdepth = 5000,
 		slopemod = 40,
@@ -218,6 +234,7 @@ local array = {}
 local i = 1
 for k,v in pairs(moveDefs) do
 	v.heatmapping = false -- disable heatmapping
+	v.allowRawMovement = true
 	array[i] = v
 	v.name = k
 	i = i + 1

@@ -5,11 +5,11 @@ unitDef = {
   acceleration                  = 0,
   activateWhenBuilt             = false,
   brakeRate                     = 0,
-  buildCostMetal                = 600,
+  buildCostMetal                = Shared.FACTORY_COST,
   builder                       = true,
   buildingGroundDecalDecaySpeed = 30,
-  buildingGroundDecalSizeX      = 9,
-  buildingGroundDecalSizeY      = 7,
+  buildingGroundDecalSizeX      = 11,
+  buildingGroundDecalSizeY      = 11,
   buildingGroundDecalType       = [[factoryplane_aoplane.dds]],
 
   buildoptions                  = {
@@ -43,7 +43,7 @@ unitDef = {
   explodeAs                     = [[LARGE_BUILDINGEX]],
   fireState                     = 0,
   footprintX                    = 8,
-  footprintZ                    = 6,
+  footprintZ                    = 7,
   iconType                      = [[facair]],
   idleAutoHeal                  = 5,
   idleTime                      = 1800,
@@ -61,8 +61,8 @@ unitDef = {
   turnRate                      = 0,
   useBuildingGroundDecal        = true,
   waterline						= 0,
-  workerTime                    = 10,
-  yardMap                       = [[oooooooo oooooooo oooooooo occooooo occooooo oooooooo]],
+  workerTime                    = Shared.FACTORY_BUILDPOWER,
+  yardMap                       = [[oooooooo oooooooo oooooooo occooooo occooooo oooooooo oooooooo]],
 
   featureDefs                   = {
 

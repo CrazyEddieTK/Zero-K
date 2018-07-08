@@ -144,8 +144,8 @@ end
 function gadget:UnitLoaded(unitID, unitDefID, unitTeam, transportID, transportTeam)
 	if float[unitID] then
 		Spring.SetUnitRulesParam(unitID, "disable_tac_ai", 0)
-		-- Spring.GiveOrderToUnit(unitID,CMD.WAIT, {}, {}) -->Error message: "UnitLoaded, [string "LuaRules/Gadgets/unit_impulsefloat_toggle.l..."]:144: GiveOrderToUnit() recursion is not permitted"
-		-- Spring.GiveOrderToUnit(unitID,CMD.WAIT, {}, {})
+		-- Spring.GiveOrderToUnit(unitID,CMD.WAIT, {}, 0) -->Error message: "UnitLoaded, [string "LuaRules/Gadgets/unit_impulsefloat_toggle.l..."]:144: GiveOrderToUnit() recursion is not permitted"
+		-- Spring.GiveOrderToUnit(unitID,CMD.WAIT, {}, 0)
 		callScript(unitID, "script.StopMoving")
 		removeFloat(unitID)
 	end
@@ -174,6 +174,7 @@ local function checkAlwaysFloat(unitID)
 		local moving = cQueue and #cQueue > 0 and sinkCommand[cQueue[1].id]
 		if not moving then
 			addFloat(unitID, unitDefID)
+			return true
 		end
 	end
 end
@@ -192,8 +193,8 @@ function gadget:GameFrame(f)
 		local isValidUnitID = Spring.ValidUnitID(unitID)
 		local isFlying = isValidUnitID and float[unitID]["isFlying"]
 		
+		local data = float[unitID]
 		if isFlying then --check if unit has landed or not
-			local data = float[unitID] --(get reference to data table)
 			data.x,data.y,data.z = Spring.GetUnitPosition(unitID)
 			local height = Spring.GetGroundHeight(data.x, data.z)
 			if data.y == height then --touch down on ground
@@ -206,11 +207,11 @@ function gadget:GameFrame(f)
 				local cmdQueue = Spring.GetCommandQueue(unitID, 1);
 				if (#cmdQueue>0) then 
 					local cmdOpt = cmdQueue[1].options
-					if (cmdQueue[1].id == CMD.MOVE or cQueue[1].id == CMD_RAW_MOVE or cQueue[1].id == CMD_RAW_BUILD) and cmdOpt.coded == 16 and cmdOpt.right then --Note: not sure what is "coded == 16" and "right" is but we want to remove any MOVE command as soon as amphfloater touch down so that it doesn't try to return to old position
-						--Spring.GiveOrderToUnit(unitID,CMD.REMOVE, {cmdQueue[1].tag}, {}) --clear Spring's command that desire unit to return to old position	
+					if (cmdQueue[1].id == CMD.MOVE or cmdQueue[1].id == CMD_RAW_MOVE or cmdQueue[1].id == CMD_RAW_BUILD) and cmdOpt.coded == 16 and cmdOpt.right then --Note: not sure what is "coded == 16" and "right" is but we want to remove any MOVE command as soon as amphfloater touch down so that it doesn't try to return to old position
+						--Spring.GiveOrderToUnit(unitID,CMD.REMOVE, {cmdQueue[1].tag}, 0) --clear Spring's command that desire unit to return to old position	
 						Spring.GiveOrderArrayToUnitArray( {unitID},{
-							{CMD.REMOVE, {cmdQueue[1].tag}, {}},--clear Spring's command that desire unit to return to old position	
-							{CMD.INSERT, {0, CMD.STOP, CMD.SHIFT,}, {"alt"}},
+							{CMD.REMOVE, {cmdQueue[1].tag}, 0},--clear Spring's command that desire unit to return to old position
+							{CMD.INSERT, {0, CMD.STOP, CMD.SHIFT,}, CMD.OPT_ALT},
 						})
 					end
 				end
@@ -218,7 +219,6 @@ function gadget:GameFrame(f)
 			i = i + 1
 			
 		elseif isValidUnitID and not isFlying then --perform float/sink behaviour
-			local data = float[unitID]
 			local def = floatDefs[data.unitDefID]
 			
 			-- This cannot be done when the float is added because that will often be
@@ -335,8 +335,7 @@ function gadget:GameFrame(f)
 					end
 				else --next position is below ground/on the ground?
 					Spring.SetUnitRulesParam(unitID, "disable_tac_ai", 0)
-					Spring.GiveOrderToUnit(unitID,CMD.WAIT, {}, {})
-					Spring.GiveOrderToUnit(unitID,CMD.WAIT, {}, {})
+					GG.WaitWaitMoveUnit(unitID)
 					callScript(unitID, "Float_stopOnFloor")
 					removeFloat(unitID)
 					
@@ -473,6 +472,15 @@ function gadget:Initialize()
 			return true
 		else
 			return false
+		end
+	end
+	
+	
+	GG.Floating_InterruptFloat = function(unitID, frames)
+		if float[unitID] then
+			Spring.SetUnitRulesParam(unitID, "disable_tac_ai", 0)
+			callScript(unitID, "script.StopMoving")
+			removeFloat(unitID)
 		end
 	end
 end

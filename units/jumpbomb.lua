@@ -16,6 +16,9 @@ unitDef = {
   collisionVolumeOffsets = [[0 0 0]],
   collisionVolumeScales  = [[20 20 20]],
   collisionVolumeType    = [[ellipsoid]],
+  selectionVolumeOffsets = [[0 0 0]],
+  selectionVolumeScales  = [[28 28 28]],
+  selectionVolumeType    = [[ellipsoid]],
   corpse                 = [[DEAD]],
 
   customParams           = {
@@ -72,7 +75,7 @@ unitDef = {
       featureDead      = [[HEAP]],
       footprintX       = 2,
       footprintZ       = 2,
-      object           = [[wreck2x2b.s3o]],
+      object           = [[skuttle_dead.s3o]],
     },
 
     HEAP      = {
@@ -101,6 +104,8 @@ local weaponDefs = {
     soundHit           = "explosion/mini_nuke",
 	
 	customParams       = {
+		burst = Shared.BURST_UNRELIABLE,
+
       lups_explodelife = 1.5,
 	},
     damage = {

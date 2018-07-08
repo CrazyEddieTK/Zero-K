@@ -1,6 +1,6 @@
 unitDef = {
   unitname               = [[cloakarty]],
-  name                   = [[Hammer]],
+  name                   = [[Sling]],
   description            = [[Light Artillery Bot]],
   acceleration           = 0.25,
   brakeRate              = 0.75,
@@ -32,7 +32,6 @@ unitDef = {
   maxWaterDepth          = 22,
   minCloakDistance       = 75,
   movementClass          = [[KBOT3]],
-  moveState              = 0,
   noChaseCategory        = [[TERRAFORM FIXEDWING GUNSHIP TOOFAST]],
   objectName             = [[cloakarty.s3o]],
   script                 = [[cloakarty.lua]],

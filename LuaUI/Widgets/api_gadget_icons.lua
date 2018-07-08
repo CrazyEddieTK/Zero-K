@@ -11,7 +11,6 @@ function widget:GetInfo()
     layer     = 5,
     enabled   = true,
     alwaysStart = true,
-	hidden    = true,
   }
 end
 
@@ -54,13 +53,13 @@ local waitTexture = {
 	[CMD_WAITCODE_GATHER] = 'LuaUI/Images/commands/Bold/wait_gather.png',
 	[CMD_WAITCODE_TIME  ] = 'LuaUI/Images/commands/Bold/wait_time.png',
 }
-	
 
 local lastLowPower = {}
 local lastFacPlop = {}
 local lastRearm = {}
 local lastRetreat = {}
 local lastWait = {}
+local everWait = {}
 
 local lowPowerUnitDef = {}
 local facPlopUnitDef = {}
@@ -78,7 +77,7 @@ for unitDefID = 1, #UnitDefs do
 	if ud.customParams.requireammo then
 		rearmUnitDef[unitDefID] = true
 	end
-	if not (ud.speed == 0 or ud.isBuilding) then
+	if not ud.isImmobile then
 		retreatUnitDef[unitDefID] = true
 	end
 	if not ud.customParams.removewait then
@@ -97,15 +96,22 @@ local function RemoveUnit(unitID)
 	unitCount = unitCount - 1
 	unitIndex[unitID] = nil
 	unitDefIDMap[unitID] = nil
+	lastLowPower[unitID] = nil
+	lastFacPlop[unitID] = nil
+	lastRearm[unitID] = nil
+	lastRetreat[unitID] = nil
+	lastWait[unitID] = nil
+	everWait[unitID] = nil
 end
 
 -------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------
 
-local spGetUnitCommands = Spring.GetUnitCommands
+local spGetCommandQueue = Spring.GetCommandQueue
 local function isWaiting(unitID)
-	local cmd = spGetUnitCommands(unitID, 1)
+	local cmd = spGetCommandQueue(unitID, 1)
 	if not cmd or #cmd == 0 then
+		everWait[unitID] = nil
 		return false
 	end
 
@@ -117,14 +123,15 @@ local function isWaiting(unitID)
 	return firstCmd.params[1] or CMD_WAITCODE_NONE
 end
 
-function SetIcons(unitID)
+function SetIcons()
+	local unitID
 	local limit = math.ceil(unitCount/4)
 	for i = 1, limit do
 		currentIndex = currentIndex + 1
 		if currentIndex > unitCount then
 			currentIndex = 1
 		end
-		local unitID = unitList[currentIndex]
+		unitID = unitList[currentIndex]
 		if not unitID then
 			return
 		end
@@ -189,7 +196,7 @@ function SetIcons(unitID)
 			end
 		end
 
-		if waitUnitDef[unitDefID] then
+		if everWait[unitID] and waitUnitDef[unitDefID] then
 			local wait = isWaiting(unitID)
 			if lastWait[unitID] ~= wait then
 				lastWait[unitID] = wait
@@ -210,6 +217,7 @@ function widget:UnitCreated(unitID, unitDefID, unitTeam)
 	if unitIndex[unitID] then
 		return
 	end
+	
 	unitCount = unitCount + 1
 	unitList[unitCount] = unitID
 	unitIndex[unitID] = unitCount
@@ -226,6 +234,20 @@ function widget:UnitDestroyed(unitID, unitDefID, unitTeam)
 	
 	if unitIndex[unitID] then
 		RemoveUnit(unitID)
+	end
+end
+
+function widget:UnitGiven(unitID, unitDefID, unitTeam, oldTeam)
+	widget:UnitCreated(unitID, unitDefID, unitTeam)
+end
+
+function widget:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
+	widget:UnitDestroyed(unitID, unitDefID, unitTeam)
+end
+
+function widget:UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdParams, cmdOpts)
+	if cmdID == CMD_WAIT then
+		everWait[unitID] = true
 	end
 end
 

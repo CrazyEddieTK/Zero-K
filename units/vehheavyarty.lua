@@ -1,7 +1,7 @@
 unitDef = {
   unitname            = [[vehheavyarty]],
   name                = [[Impaler]],
-  description         = [[Precision Artillery Vehicle]],
+  description         = [[Precision Artillery Rover]],
   acceleration        = 0.042,
   brakeRate           = 0.08,
   buildCostMetal      = 700,
@@ -16,7 +16,7 @@ unitDef = {
 
   customParams        = {
 
-    dontfireatradarcommand = '1',
+    dontfireatradarcommand = '0',
   },
 
   explodeAs           = [[BIG_UNITEX_MERL]],
@@ -49,7 +49,7 @@ unitDef = {
   trackStrength       = 8,
   trackStretch        = 1,
   trackType           = [[StdTank]],
-  trackWidth          = 40,
+  trackWidth          = 44,
   turninplace         = 0,
   turnRate            = 460,
 
@@ -74,6 +74,8 @@ unitDef = {
       craterMult              = 2,
 
 	  customParams        = {
+		burst = Shared.BURST_RELIABLE,
+        reaim_time = 15, -- Some script bug. It does not need fast aim updates anyway.
 		light_camera_height = 2500,
 		light_color = [[1 0.8 0.2]],
 	  },
@@ -83,11 +85,6 @@ unitDef = {
         subs    = 4,
       },
 
-      --Want to remove engine's FX and rely on CEG??? NOTE: issues with CEG: http://springrts.com/mantis/view.php?id=3401 (invisible CEGs can block all visible CEGs if MaxParticles is low. Not cool...)
-      customParams = {
-		--trail_burnout = 64, -- two seconds of vertical ascension
-		--trail_burnout_ceg = [[missiletrailredsmall]],
-      },
       texture1=[[null]], --flare, reference: http://springrts.com/wiki/Weapon_Variables#Texture_Tags
       --texture2=[[null]], --smoketrail
       --texture3=[[null]], --flame

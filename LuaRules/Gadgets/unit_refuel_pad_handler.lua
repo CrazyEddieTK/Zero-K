@@ -169,7 +169,8 @@ local function SitOnPad(unitID)
 	
 	local function SitLoop()
 		local landDuration = 0
-		local reammoProgress = GG.RequireRefuel(unitID) and 0
+		local reammoProgress = GG.RequireRefuel(unitID)	-- read unitrulesparam for save/load handling
+			and (Spring.GetUnitRulesParam(unitID, "reammoProgress") or 0) * (reammoHalfSeconds[unitDefID] or REAMMO_HALF_SECONDS)
 		local drainingEnergy = false
 		
 		while true do
@@ -519,7 +520,6 @@ end
 function GG.LandAborted(unitID)
 	if landingUnit[unitID] then
 		landingUnit[unitID].abort = true
- 
 	end
 end
 

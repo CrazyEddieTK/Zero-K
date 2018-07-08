@@ -51,6 +51,8 @@ local transportIndex = {count = 0, unit = {}}
 
 WG.FerryUnits = {}
 
+local EMPTY_TABLE = {}
+
 -------------------------------------------------------------------
 -------------------------------------------------------------------
 --- ROUTE HANDLING
@@ -160,10 +162,16 @@ end
 -------------------------------------------------------------------
 --- COMMAND HANDLING
 
+local function GiveUnloadOrder(transportID, x, y, z)
+	Spring.GiveOrderToUnit(transportID, CMD.UNLOAD_UNITS, {x, y, z, UNLOAD_RADIUS}, 0)
+	Spring.GiveOrderToUnit(transportID, CMD.UNLOAD_UNITS, {x, y, z, UNLOAD_RADIUS*2}, CMD.OPT_SHIFT)
+	Spring.GiveOrderToUnit(transportID, CMD.UNLOAD_UNITS, {x, y, z, UNLOAD_RADIUS*4}, CMD.OPT_SHIFT)
+end
+
 function widget:CommandsChanged()
 	local customCommands = widgetHandler.customCommands
 
-	customCommands[#customCommands+1] = {			
+	customCommands[#customCommands+1] = {
 		id      = CMD_SET_FERRY,
 		type    = CMDTYPE.ICON_MAP,
 		tooltip = 'Places a ferry route',
@@ -175,7 +183,6 @@ function widget:CommandsChanged()
 		pos = {CMD_ONOFF,CMD_REPEAT,CMD_MOVE_STATE,CMD_FIRE_STATE, CMD_RETREAT}, 
 	}
 end
-
 
 function widget:CommandNotify(cmdID, cmdParams, cmdOptions)
 	
@@ -193,7 +200,7 @@ function widget:CommandNotify(cmdID, cmdParams, cmdOptions)
 					local trans = transport[route.transporters[i]]
 					if trans.waypoint == 0 then
 						Spring.GiveOrderToUnit(route.transporters[i], CMD.MOVE, 
-							{route.start.x, route.start.y, route.start.z}, {} )
+							{route.start.x, route.start.y, route.start.z}, 0 )
 					end
 				end
 			elseif movingPoint.index <= ferryRoutes.route[movingPoint.r].pointcount then
@@ -202,7 +209,7 @@ function widget:CommandNotify(cmdID, cmdParams, cmdOptions)
 					local trans = transport[route.transporters[i]]
 					if trans.waypoint == movingPoint.index then
 						Spring.GiveOrderToUnit(route.transporters[i], CMD.MOVE, 
-							{route.points[movingPoint.index].x, route.points[movingPoint.index].y, route.points[movingPoint.index].z}, {} )
+							{route.points[movingPoint.index].x, route.points[movingPoint.index].y, route.points[movingPoint.index].z}, 0 )
 					end
 				end
 			else
@@ -210,8 +217,7 @@ function widget:CommandNotify(cmdID, cmdParams, cmdOptions)
 				for i = 1, route.transportCount do
 					local trans = transport[route.transporters[i]]
 					if trans.waypoint > route.pointcount then
-						Spring.GiveOrderToUnit(route.transporters[i], CMD.UNLOAD_UNITS, 
-							{route.finish.x, route.finish.y, route.finish.z, UNLOAD_RADIUS}, {} )
+						GiveUnloadOrder(route.transporters[i], route.finish.x, route.finish.y, route.finish.z)
 					end
 				end
 			end
@@ -345,7 +351,7 @@ function widget:Update()
 	
 	if toBeWaited.count ~= 0 then
 		for i = 1, toBeWaited.count do
-			Spring.GiveOrderToUnit(toBeWaited.unit[i], CMD.WAIT, {},{"shift"} )
+			Spring.GiveOrderToUnit(toBeWaited.unit[i], CMD.WAIT, EMPTY_TABLE, CMD.OPT_SHIFT)
 		end
 		toBeWaited.count = 0
 		toBeWaited.unit = {}
@@ -361,9 +367,9 @@ function widget:UnitUnloaded(unitID, unitDefID, teamID, transportID)
 	if Spring.ValidUnitID(unitID) then
 		local cmd = Spring.GetCommandQueue(unitID, 2)
 		if cmd and #cmd > 0 and cmd[1].id == CMD.WAIT then
-			Spring.GiveOrderToUnit(unitID, CMD.WAIT, {}, {})
+			Spring.GiveOrderToUnit(unitID, CMD.WAIT, EMPTY_TABLE, 0)
 			if #cmd == 1 then
-				Spring.GiveOrderToUnit(unitID, CMD.STOP, {}, {})
+				Spring.GiveOrderToUnit(unitID, CMD.STOP, EMPTY_TABLE, 0)
 			end
 		end
 	end
@@ -407,11 +413,10 @@ function widget:GameFrame(frame)
 						if trans.waypoint == 0 or disSQ(x, z, route.points[trans.waypoint].x, route.points[trans.waypoint].z) < NEAR_WAYPOINT_RANGE_SQ then
 							trans.waypoint = trans.waypoint + 1
 							if trans.waypoint > route.pointcount then
-								Spring.GiveOrderToUnit(unitID, CMD.UNLOAD_UNITS, 
-									{route.finish.x, route.finish.y, route.finish.z, UNLOAD_RADIUS}, {} )
+								GiveUnloadOrder(unitID, route.finish.x, route.finish.y, route.finish.z)
 							else
 								GiveClampedOrderToUnit(unitID, CMD.MOVE, 
-									{route.points[trans.waypoint].x, route.points[trans.waypoint].y, route.points[trans.waypoint].z}, {} )
+									{route.points[trans.waypoint].x, route.points[trans.waypoint].y, route.points[trans.waypoint].z}, 0 )
 							end
 						end
 					end
@@ -423,10 +428,10 @@ function widget:GameFrame(frame)
 							trans.waypoint = trans.waypoint - 1
 							if trans.waypoint == 0 then
 								GiveClampedOrderToUnit(unitID, CMD.MOVE, 
-									{route.start.x, route.start.y, route.start.z}, {} )
+									{route.start.x, route.start.y, route.start.z}, 0 )
 							else
 								GiveClampedOrderToUnit(unitID, CMD.MOVE, 
-									{route.points[trans.waypoint].x, route.points[trans.waypoint].y, route.points[trans.waypoint].z}, {} )
+									{route.points[trans.waypoint].x, route.points[trans.waypoint].y, route.points[trans.waypoint].z}, 0 )
 							end
 						end
 					elseif unitsToTransport.count ~= 0 and disSQ(x, z, route.start.x, route.start.z) < NEAR_START_RANGE_SQ then
@@ -436,7 +441,7 @@ function widget:GameFrame(frame)
 							local choiceUnitID = unitsToTransport.unit[choice]
 							local ud = UnitDefs[Spring.GetUnitDefID(choiceUnitID)]
 							if ud.xsize <= trans.maxSize and ud.zsize <= trans.maxSize and ud.mass <= trans.maxMass then
-								Spring.GiveOrderToUnit(unitID, CMD.LOAD_UNITS, {choiceUnitID}, {} )
+								Spring.GiveOrderToUnit(unitID, CMD.LOAD_UNITS, {choiceUnitID}, 0 )
 								route.unitsQueuedToBeTransported[choiceUnitID] = frame
 								
 								unitsToTransport.unit[choice] = unitsToTransport.unit[unitsToTransport.count]
@@ -446,7 +451,7 @@ function widget:GameFrame(frame)
 						end
 					elseif disSQ(x, z, route.start.x, route.start.z) > NEAR_WAYPOINT_RANGE_SQ then
 						GiveClampedOrderToUnit(unitID, CMD.MOVE, 
-							{route.start.x, route.start.y, route.start.z}, {} )
+							{route.start.x, route.start.y, route.start.z}, 0 )
 					end
 				
 				end

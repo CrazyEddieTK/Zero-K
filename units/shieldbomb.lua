@@ -1,6 +1,6 @@
 unitDef = {
   unitname               = [[shieldbomb]],
-  name                   = [[Roach]],
+  name                   = [[Snitch]],
   description            = [[Crawling Bomb (Burrows)]],
   acceleration           = 0.25,
   activateWhenBuilt      = true,
@@ -14,7 +14,10 @@ unitDef = {
   cloakCost              = 0,
   collisionVolumeOffsets = [[0 0 0]],
   collisionVolumeScales  = [[16 16 16]],
-  collisionVolumeType	 = [[ellipsoid]],
+  collisionVolumeType    = [[ellipsoid]],
+  selectionVolumeOffsets = [[0 0 0]],
+  selectionVolumeScales  = [[28 28 28]],
+  selectionVolumeType    = [[ellipsoid]],
   corpse                 = [[DEAD]],
 
   customParams           = {
@@ -72,7 +75,7 @@ unitDef = {
       featureDead      = [[HEAP]],
       footprintX       = 2,
       footprintZ       = 2,
-      object           = [[wreck2x2b.s3o]],
+      object           = [[logroach_dead.s3o]],
     },
 
     HEAP      = {
@@ -101,6 +104,9 @@ local weaponDefs = {
     soundHit           = "explosion/mini_nuke",
     damage = {
       default          = 1200.8,
+    },
+    customParams = {
+      burst = Shared.BURST_UNRELIABLE,
     },
   },
 }

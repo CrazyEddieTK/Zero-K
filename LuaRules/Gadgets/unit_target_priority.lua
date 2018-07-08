@@ -256,7 +256,7 @@ local function GetGravityWeaponPriorityModifier(unitID, attackerWeaponDefID)
 		if inbuild then
 			remScaledMass[unitID] = -1
 		else
-			-- Glaive = 1.46, Zeus = 5.24, Reaper = 9.48
+			-- Glaive = 1.46, Zeus = 5.24, Minotaur = 9.48
 			remScaledMass[unitID] = 0.02 * UnitDefs[remUnitDefID[unitID]].mass
 		end
 	end
@@ -278,10 +278,14 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 -- Priority callin
+local DEF_TARGET_TOO_FAR_PRIORITY = 100000 --usually numbers are around several millions, if target is out of range
 
 function gadget:AllowWeaponTarget(unitID, targetID, attackerWeaponNum, attackerWeaponDefID, defPriority)
 
 	--Spring.Echo("TARGET CHECK")
+	if defPriority > DEF_TARGET_TOO_FAR_PRIORITY then
+		return defPriority --hope engine is not that wrong about the best target outside of the range
+	end
 	
 	if (not targetID) or (not unitID) or (not attackerWeaponDefID) then
 		return true, 25
@@ -379,7 +383,7 @@ function gadget:AllowWeaponTarget(unitID, targetID, attackerWeaponNum, attackerW
 		defPrio = defPrio + distAdd
 	end
 	
-	--Spring.Utilities.UnitEcho(targetID, defPrio)
+	--Spring.Utilities.UnitEcho(targetID, string.format("%.1f", defPrio))
 	return true, defPrio + velocityAdd + lastShotBonus -- bigger value have lower priority
 end
 

@@ -36,7 +36,6 @@ unitDef = {
   maxWaterDepth       = 22,
   minCloakDistance    = 75,
   movementClass       = [[HOVER3]],
-  moveState           = 0,
   noAutoFire          = false,
   noChaseCategory     = [[TERRAFORM SATELLITE SUB]],
   objectName          = [[nsaclash.s3o]],
@@ -80,6 +79,8 @@ unitDef = {
       craterMult              = 1.4,
 	  
       customParams        = {
+		burst = Shared.BURST_RELIABLE,
+
 		light_camera_height = 3000,
 		light_color = [[1 0.58 0.17]],
 		light_radius = 200,

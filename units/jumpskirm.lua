@@ -12,9 +12,13 @@ unitDef = {
   canMove             = true,
   canPatrol           = true,
   category            = [[LAND]],
+  selectionVolumeOffsets = [[0 0 0]],
+  selectionVolumeScales  = [[42 42 42]],
+  selectionVolumeType    = [[ellipsoid]],
   corpse              = [[DEAD]],
 
   customParams        = {
+	dontfireatradarcommand = '1',
   },
 
   explodeAs           = [[BIG_UNITEX]],
@@ -30,7 +34,6 @@ unitDef = {
   maxWaterDepth       = 22,
   minCloakDistance    = 75,
   movementClass       = [[KBOT3]],
-  moveState           = 0,
   noAutoFire          = false,
   noChaseCategory     = [[TERRAFORM FIXEDWING SUB UNARMED]],
   objectName          = [[CORMORT.s3o]],
@@ -79,6 +82,8 @@ unitDef = {
 	  craterMult              = 0,
       
 	  customparams = {
+		burst = Shared.BURST_RELIABLE,
+
 	    timeslow_damagefactor = 3,
 		timeslow_overslow_frames = 2*30,
 		
@@ -104,7 +109,7 @@ unitDef = {
 	  reloadtime              = 10,
 	  rgbColor                = [[0.3 0 0.4]],
 	  soundStart              = [[weapon/laser/heavy_laser5]],
-	  soundStartVolume        = 3,
+	  soundStartVolume        = 3.8,
 	  soundTrigger            = true,
 	  texture1                = [[largelaser]],
 	  texture2                = [[flare]],

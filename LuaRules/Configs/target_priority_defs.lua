@@ -56,18 +56,6 @@ for i=1, #UnitDefs do
 	end
 end
 
-local unitHealthRatioOverride = {
-	[UnitDefNames["vehscout"].id] = 4,
-	[UnitDefNames["spiderscout"].id] = 4,
-}
-
--- Pregenerate HP ratio
-local unitHealthRatio = {}
-for i=1, #UnitDefs do
-	local ud = UnitDefs[i]
-	unitHealthRatio[i] = unitHealthRatioOverride[i] or ud.health/ud.buildTime
-end
-
 -- Don't shoot at fighters or drones, they are unimportant.
 local unitIsFighterOrDrone = {
 	[UnitDefNames["planefighter"].id] = true,
@@ -77,7 +65,7 @@ local unitIsFighterOrDrone = {
 	[UnitDefNames["dronecarry"].id] = true,
 }
 
---Wolverine mines are stupid targets.
+--Badger mines are stupid targets.
 local unitIsClaw = {
 	[UnitDefNames["wolverine_mine"].id] = true,
 }
@@ -140,49 +128,49 @@ local unitIsHeavy = {
 -- Hardcode weapons that are bad against fast moving stuff.
 -- [weapondefid] = {Threshold for penalty to apply, base penalty, additional penantly per excess velocity}
 local VEL_DEFAULT_BASE = 1
-local VEL_DEFAULT_SCALE = 8
+local VEL_DEFAULT_SCALE = 5
 
 local velocityPenaltyDefs = {
-	[WeaponDefNames["shieldassault_thud_weapon"].id]       = {2.5},
-	[WeaponDefNames["shieldskirm_storm_rocket"].id]     = {2.0},
-	[WeaponDefNames["shieldaa_armkbot_missile"].id]  = {16.0},
-	[WeaponDefNames["cloakskirm_bot_rocket"].id]        = {2.5},
-	[WeaponDefNames["cloakarty_hammer_weapon"].id]      = {1.5},
-	[WeaponDefNames["cloaksnipe_shockrifle"].id]       = {2.5},
-	[WeaponDefNames["vehsupport_cortruck_missile"].id]  = {11.0},
-	[WeaponDefNames["vehassault_plasma"].id]            = {2.5},
+	[WeaponDefNames["shieldassault_thud_weapon"].id]      = {2.5},
+	[WeaponDefNames["shieldskirm_storm_rocket"].id]       = {2.0},
+	[WeaponDefNames["shieldaa_armkbot_missile"].id]       = {16.0},
+	[WeaponDefNames["cloakskirm_bot_rocket"].id]          = {2.5},
+	[WeaponDefNames["cloakarty_hammer_weapon"].id]        = {1.5},
+	[WeaponDefNames["cloaksnipe_shockrifle"].id]          = {2.5},
+	[WeaponDefNames["vehsupport_cortruck_missile"].id]    = {11.0},
+	[WeaponDefNames["vehassault_plasma"].id]              = {2.5},
 	[WeaponDefNames["vehheavyarty_cortruck_rocket"].id]   = {0.5},
-	[WeaponDefNames["vehaa_missile"].id]             = {14.0},
-	[WeaponDefNames["gunshipheavyskirm_emg"].id]              = {3.0},
-	[WeaponDefNames["gunshipaa_aa_missile"].id]      = {14.0},
-	[WeaponDefNames["hoverskirm_missile"].id]          = {4.5},
-	[WeaponDefNames["hoverassault_dew"].id]          = {2.5},
-	[WeaponDefNames["amphraid_torpmissile"].id]   = {4.5},
-	[WeaponDefNames["amphfloater_cannon"].id]        = {2.5},
-	[WeaponDefNames["amphaa_missile"].id]            = {14.0},
-	[WeaponDefNames["spiderassault_thud_weapon"].id] = {2.5},
-	[WeaponDefNames["spiderskirm_adv_rocket"].id]        = {2.5},
-	[WeaponDefNames["spidercrabe_arm_crabe_gauss"].id]  = {2.5},
-	[WeaponDefNames["spideraa_aa"].id]               = {11.0},
-	[WeaponDefNames["jumpscout_missile"].id]             = {8.0},
-	[WeaponDefNames["tankassault_cor_reap"].id]          = {2.5},
-	[WeaponDefNames["tankheavyassault_cor_gol"].id]            = {2.0},
-	[WeaponDefNames["tankarty_core_artillery"].id]    = {1.5},
-	[WeaponDefNames["tankheavyarty_plasma"].id]               = {0.5},
-	[WeaponDefNames["striderantiheavy_disintegrator"].id]  = {2.8},
-	[WeaponDefNames["striderdante_napalm_rockets"].id]      = {2.8},
-	[WeaponDefNames["striderarty_rocket"].id]           = {0.5},
---	[WeaponDefNames["shipcarrier_armmship_rocket"].id]      = {0.5},
-	[WeaponDefNames["shipheavyarty_plasma"].id]      = {2.5},
-	[WeaponDefNames["shipskirm_rocket"].id]          = {2.8},
-	[WeaponDefNames["shiparty_plasma"].id]           = {2.0},
-	[WeaponDefNames["turretmissile_armrl_missile"].id]       = {14.0},
-	[WeaponDefNames["turretriot_turretriot_weapon"].id]    = {5.0},
+	[WeaponDefNames["vehaa_missile"].id]                  = {14.0},
+	[WeaponDefNames["gunshipheavyskirm_emg"].id]          = {3.0},
+	[WeaponDefNames["gunshipaa_aa_missile"].id]           = {14.0},
+	[WeaponDefNames["hoverskirm_missile"].id]             = {4.5},
+	[WeaponDefNames["hoverassault_dew"].id]               = {2.5},
+	[WeaponDefNames["amphraid_torpmissile"].id]           = {4.5},
+	[WeaponDefNames["amphfloater_cannon"].id]             = {2.5},
+	[WeaponDefNames["amphaa_missile"].id]                 = {14.0},
+	[WeaponDefNames["spiderassault_thud_weapon"].id]      = {2.5},
+	[WeaponDefNames["spiderskirm_adv_rocket"].id]         = {2.5},
+	[WeaponDefNames["spidercrabe_arm_crabe_gauss"].id]    = {2.5},
+	[WeaponDefNames["spideraa_aa"].id]                    = {11.0},
+	[WeaponDefNames["jumpscout_missile"].id]              = {8.0},
+	[WeaponDefNames["tankassault_cor_reap"].id]           = {2.5},
+	[WeaponDefNames["tankheavyassault_cor_gol"].id]       = {2.0},
+	[WeaponDefNames["tankarty_core_artillery"].id]        = {1.5},
+	[WeaponDefNames["tankheavyarty_plasma"].id]           = {0.5},
+	[WeaponDefNames["striderantiheavy_disintegrator"].id] = {2.8},
+	[WeaponDefNames["striderdante_napalm_rockets"].id]    = {2.8},
+	[WeaponDefNames["striderarty_rocket"].id]             = {0.5},
+--	[WeaponDefNames["shipcarrier_armmship_rocket"].id]    = {0.5},
+	[WeaponDefNames["shipheavyarty_plasma"].id]           = {2.5},
+	[WeaponDefNames["shipskirm_rocket"].id]               = {2.8},
+	[WeaponDefNames["shiparty_plasma"].id]                = {2.0},
+	[WeaponDefNames["turretmissile_armrl_missile"].id]    = {14.0},
+	[WeaponDefNames["turretriot_turretriot_weapon"].id]   = {5.0},
 	[WeaponDefNames["turretaalaser_aagun"].id]            = {7.0, 0, 3},
-	[WeaponDefNames["turretaaclose_missile"].id]      = {16.0},
+	[WeaponDefNames["turretaaclose_missile"].id]          = {16.0},
 	[WeaponDefNames["turretaafar_missile"].id]            = {14.0},
-	[WeaponDefNames["staticarty_plasma"].id]           = {2.5},
-	[WeaponDefNames["staticheavyarty_plasma"].id]           = {2.0},
+	[WeaponDefNames["staticarty_plasma"].id]              = {2.5},
+	[WeaponDefNames["staticheavyarty_plasma"].id]         = {2.0},
 }
 
 -- Do not apply the large already disarmed target penalty if it has disarm less than the times below.
@@ -257,23 +245,6 @@ for i = 1, #UnitDefs do
 	end
 end
 
--- Uncomment to output expected base priority values.
---[[
-local baseUnitPriority = {}
-for i=1, #UnitDefs do
-	local ud = UnitDefs[i]
-	baseUnitPriority[i] = {
-		priority = unitHealthRatioOverride[i] or ud.health/ud.buildTime,
-		name = ud.name,
-	}
-end
-
-table.sort(baseUnitPriority, function(a,b) return (a.priority > b.priority) end)
-for i=1, #baseUnitPriority do
-	Spring.Echo(baseUnitPriority[i].name .. " = " .. baseUnitPriority[i].priority .. ",")
-end
---]]
-
 -- Generate transport unit table
 local transportMult = {}
 
@@ -288,29 +259,38 @@ end
 local targetTable = {}
 
 for uid = 1, #UnitDefs do
+	local ud = UnitDefs[uid]
+	local unitHealth = ud.health
+	local unitCost = ud.buildTime
+	local armorType = ud.armorType
 	targetTable[uid] = {}
 	for wid = 1, #WeaponDefs do
+		local wd = WeaponDefs[wid]
+		local damage = wd.damages[armorType]
+		local priority = math.max(damage, unitHealth)/unitCost
+		if priority > 12 then
+			priority = 12 + 0.1*priority
+		end
 		if unitIsUnarmed[uid] then
-			targetTable[uid][wid] = unitHealthRatio[uid] + 35
+			targetTable[uid][wid] = priority + 35
 		elseif unitIsClaw[uid] then
-			targetTable[uid][wid] = unitHealthRatio[uid] + 1000
+			targetTable[uid][wid] = priority + 1000
 		elseif (weaponBadCats[wid].fixedwing and unitIsFixedwing[uid])
 			or (weaponBadCats[wid].gunship and unitIsGunship[uid])
 			or (weaponBadCats[wid].ground and unitIsGround[uid]) then
-				targetTable[uid][wid] = unitHealthRatio[uid] + 15
-		elseif (unitIsFighterOrDrone[uid])
-			or (weaponBadCats[wid].cheap and unitIsCheap[uid]) then
-				targetTable[uid][wid] = unitHealthRatio[uid] + 10
+				targetTable[uid][wid] = priority + 15
+		elseif (unitIsFighterOrDrone[uid]) then
+			--or (weaponBadCats[wid].cheap and unitIsCheap[uid]) then
+				targetTable[uid][wid] = priority + 10
 		elseif (unitIsBomber[uid] and weaponIsAA[wid])
 			or (weaponBadCats[wid].heavy and unitIsHeavy[uid]) then
-			targetTable[uid][wid] = unitHealthRatio[uid]*0.3
+			targetTable[uid][wid] = priority*0.3
 		else
-			targetTable[uid][wid] = unitHealthRatio[uid]
+			targetTable[uid][wid] = priority
 		end
 		
 		-- Autogenerate some wobble penalties.
 		if not radarWobblePenalty[wid] then
-			local wd = WeaponDefs[wid]
 			local weaponType = wd.type
 			if weaponType == "BeamLaser" or weaponType == "LaserCannon" or weaponType == "LightningCannon" then
 				radarWobblePenalty[wid] = 5
@@ -327,7 +307,7 @@ for weaponDefID, data in pairs(velocityPenaltyDefs) do
 	data[2] = data[2] - data[1]*data[3]
 end
 
-local reloadTimeAlpha = 1.8 --seconds, matches Leveler's reload time
+local reloadTimeAlpha = 1.8 --seconds, matches Ripper's reload time
 local highAlphaWeaponDamages = {}
 for wid = 1, #WeaponDefs do
 	local wd = WeaponDefs[wid]

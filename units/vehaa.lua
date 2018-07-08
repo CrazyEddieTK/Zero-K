@@ -1,7 +1,7 @@
 unitDef = {
   unitname               = [[vehaa]],
   name                   = [[Crasher]],
-  description            = [[Fast Anti-Air Vehicle]],
+  description            = [[Fast Anti-Air Rover]],
   acceleration           = 0.05952,
   brakeRate              = 0.14875,
   buildCostMetal         = 220,
@@ -82,6 +82,8 @@ unitDef = {
       cylinderTargeting       = 1,
 
 	  customParams        	  = {
+		burst = Shared.BURST_RELIABLE,
+
 		isaa = [[1]],
 		light_color = [[0.5 0.6 0.6]],
 	  },

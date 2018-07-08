@@ -11,6 +11,9 @@ unitDef = {
   canMove                = true,
   canPatrol              = true,
   category               = [[LAND SINK]],
+  selectionVolumeOffsets = [[0 0 0]],
+  selectionVolumeScales  = [[30 30 30]],
+  selectionVolumeType    = [[ellipsoid]], 
   corpse                 = [[DEAD]],
 
   customParams           = {
@@ -73,6 +76,8 @@ unitDef = {
       craterMult              = 2,
 
 	  customparams = {
+		burst = Shared.BURST_RELIABLE,
+
 		light_color = [[1 0.6 0.2]],
 		light_radius = 180,
 	  },

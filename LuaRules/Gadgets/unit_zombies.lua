@@ -59,6 +59,7 @@ local GaiaAllyTeamID = select(6, Spring.GetTeamInfo(GaiaTeamID))
 
 local gameframe = 0
 local LOS_ACCESS = {inlos = true}
+local PRIVATE_ACCESS = {private = true}
 
 local random = math.random
 local floor = math.floor
@@ -101,11 +102,14 @@ if (tonumber(ZOMBIES_PERMA_SLOW) == nil) then
 	-- from 0 to 1, symbolises from 0% to 50% slow which is always on
 	ZOMBIES_PERMA_SLOW = 1
 end
+
 if ZOMBIES_PERMA_SLOW == 0 then
 	ZOMBIES_PERMA_SLOW = nil
 else
 	ZOMBIES_PERMA_SLOW = 1 - ZOMBIES_PERMA_SLOW*0.5
 end
+
+local ZOMBIES_PARTIAL_RECLAIM = (tonumber(modOptions.zombies_partial_reclaim) == 1)
 
 local CMD_REPEAT = CMD.REPEAT
 local CMD_MOVE_STATE = CMD.MOVE_STATE
@@ -173,7 +177,7 @@ local function OpenAllClownSlots(unitID, unitDefID) -- give factory something to
 	local orders = {}
 	--local x,y,z = spGetUnitPosition(unitID)
 	for i = 1, random(10, 30) do
-		orders[#orders + 1] = {-buildopts[random(1, #buildopts)], {}, {} }
+		orders[#orders + 1] = {-buildopts[random(1, #buildopts)], {}, 0 }
 	end
 	if (#orders > 0) then
 		if not spGetUnitIsDead(unitID) then
@@ -196,42 +200,43 @@ end
 -- in halloween gadget, sometimes giving order to unit would result in crash because unit happened to be dead at the time order was given
 -- TODO probably same units in groups could get same orders...
 local function BringingDownTheHeavens(unitID)
-	if not spGetUnitIsDead(unitID) then
-		local unitDefID = spGetUnitDefID(unitID)
--- 		if (getMovetype(UnitDefs[unitDefID]) ~= false) then
-		local rx,rz,ry
-		local orders = {}
-		local near_ally
-		if (UnitDefs[unitDefID].canAttack) then
-			near_ally = GetUnitNearestAlly(unitID, 300)
-			if (near_ally) then
-				local cQueue = spGetCommandQueue(near_ally, 1)
-				if cQueue and (#cQueue > 0) and cQueue[1].id == CMD_GUARD then -- oh
-					near_ally = nil -- i dont want chain guards...
-				end
+	local unitDefID = (not spGetUnitIsDead(unitID)) and spGetUnitDefID(unitID)
+	if not unitDefID then
+		return
+	end
+	
+	local rx,rz,ry
+	local orders = {}
+	local near_ally
+	if (UnitDefs[unitDefID].canAttack) then
+		near_ally = GetUnitNearestAlly(unitID, 300)
+		if (near_ally) then
+			local cQueue = spGetCommandQueue(near_ally, 1)
+			if cQueue and (#cQueue > 0) and cQueue[1].id == CMD_GUARD then -- oh
+				near_ally = nil -- i dont want chain guards...
 			end
 		end
-		local x,y,z = spGetUnitPosition(unitID)
-		if (near_ally) and random(0, 5) < 4 then -- 60% chance to guard nearest ally
-			orders[#orders + 1] = {CMD_GUARD, {near_ally}, {}}
+	end
+	local x,y,z = spGetUnitPosition(unitID)
+	if (near_ally) and random(0, 5) < 4 then -- 60% chance to guard nearest ally
+		orders[#orders + 1] = {CMD_GUARD, {near_ally}, 0}
+	end
+	for i = 1, random(10, 30) do
+		rx = random(0, mapWidth)
+		rz = random(0, mapHeight)
+		ry = spGetGroundHeight(rx,rz)
+		if IsTargetReallyReachable(unitID, rx, ry, rz, x, y, z) then
+			orders[#orders+1] = {CMD_FIGHT, {rx, ry, rz}, CMD_OPT_SHIFT}
 		end
-		for i = 1, random(10, 30) do
-			rx = random(0, mapWidth)
-			rz = random(0, mapHeight)
-			ry = spGetGroundHeight(rx,rz)
-			if IsTargetReallyReachable(unitID, rx, ry, rz, x, y, z) then
-				orders[#orders+1] = {CMD_FIGHT, {rx, ry, rz}, CMD_OPT_SHIFT}
-			end
+	end
+	if (#orders > 0) then
+		if not spGetUnitIsDead(unitID) then
+			spGiveOrderArrayToUnitArray({unitID},orders)
 		end
-		if (#orders > 0) then
-			if not spGetUnitIsDead(unitID) then
-				spGiveOrderArrayToUnitArray({unitID},orders)
-			end
-		end
-		if (UnitDefs[unitDefID].isFactory) then
-			OpenAllClownSlots(unitID, unitDefID) -- give factory something to do
-			zombies[unitID] = nil -- no need to update factory orders anymore
-		end
+	end
+	if (UnitDefs[unitDefID].isFactory) then
+		OpenAllClownSlots(unitID, unitDefID) -- give factory something to do
+		zombies[unitID] = nil -- no need to update factory orders anymore
 	end
 end
 
@@ -272,6 +277,13 @@ function gadget:GameFrame(f)
 					index = index + 1
 				end
 				local resName, face = myGetFeatureRessurect(featureID)
+				local partialReclaim = 1
+				if ZOMBIES_PARTIAL_RECLAIM then
+					local currentMetal, maxMetal = Spring.GetFeatureResources(featureID)
+					if currentMetal and maxMetal and (maxMetal > 0) then
+						partialReclaim = currentMetal/maxMetal
+					end
+				end
 				spDestroyFeature(featureID)
 				local unitID = spCreateUnit(resName, x, y, z, face, GaiaTeamID)
 				if (unitID) then
@@ -279,6 +291,13 @@ function gadget:GameFrame(f)
 					spSpawnCEG("resurrect", x, y, z, 0, 0, 0, size)
 					Spring.GiveOrderToUnit(unitID, CMD.FIRE_STATE, {2}, 0)
 					SendToUnsynced("rez_sound", x, y, z)
+					if partialReclaim ~= 1 then
+						local health = Spring.GetUnitHealth(unitID)
+						if health then
+							Spring.SetUnitHealth(unitID, health*partialReclaim)
+							--spSetUnitRulesParam(unitID, "zombie_partialReclaim", partialReclaim, PRIVATE_ACCESS)
+						end
+					end
 				end
 			else
 				local steps_to_spawn = floor((time_to_spawn - f) / 32)
@@ -337,8 +356,9 @@ end
 function gadget:FeatureCreated(featureID, allyTeam)
 	local resName, face = myGetFeatureRessurect(featureID)
 	if resName and face and not zombies_to_spawn[featureID] then
-		if UnitDefNames[resName] and not NonZombies[resName] then
-			local rez_time = UnitDefNames[resName].metalCost / ZOMBIES_REZ_SPEED
+		local ud = resName and UnitDefNames[resName]
+		if ud and not NonZombies[resName] then
+			local rez_time = ud.metalCost / ZOMBIES_REZ_SPEED
 			if (rez_time < ZOMBIES_REZ_MIN) then
 				  rez_time = ZOMBIES_REZ_MIN
 			end
@@ -364,8 +384,8 @@ local function ReInit(reinit)
 	if not (defined) then
 		UnitFinished = function(unitID, unitDefID, teamID, builderID)
 			if (teamID == GaiaTeamID) and not (zombies[unitID]) then
-				spGiveOrderToUnit(unitID, CMD_REPEAT, {1}, {})
-				spGiveOrderToUnit(unitID, CMD_MOVE_STATE, {2}, {})
+				spGiveOrderToUnit(unitID, CMD_REPEAT, {1}, 0)
+				spGiveOrderToUnit(unitID, CMD_MOVE_STATE, {2}, 0)
 				BringingDownTheHeavens(unitID)
 				zombies[unitID] = true
 				if ZOMBIES_PERMA_SLOW then

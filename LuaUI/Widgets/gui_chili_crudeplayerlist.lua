@@ -13,6 +13,10 @@ function widget:GetInfo()
   }
 end
 
+if Spring.GetModOptions().singleplayercampaignbattleid then
+	return
+end
+
 VFS.Include ("LuaRules/Utilities/lobbyStuff.lua")
 
 --------------------------------------------------------------------------------
@@ -379,23 +383,29 @@ local function UpdatePlayerInfo()
 				cpuUsage = cpuUsage or 0
 				local min_pingTime = math.min(pingTime, 1)
 				local min_cpuUsage = math.min(cpuUsage, 1)
-				local cpuCol = pingCpuColors[ math.ceil( min_cpuUsage * 5 ) ] 
-				local pingCol = pingCpuColors[ math.ceil( min_pingTime * 5 ) ]
+				local cpuColIndex = math.ceil( min_cpuUsage * 5 )
+				local pingColIndex = math.ceil( min_pingTime * 5 )
 				local pingTime_readable = PingTimeOut(pingTime)
-				
 				local blank = not active
 				
 				local cpuImg = entities[i].cpuImg
 				if cpuImg then
-					cpuImg.color = cpuCol
 					cpuImg.tooltip = (blank and nil or 'CPU: ' .. math.round(cpuUsage*100) .. '%')
-					cpuImg:Invalidate()
+					if cpuColIndex ~= entities[i].cpuIndexOld then
+						entities[i].cpuIndexOld = cpuColIndex
+						cpuImg.color = pingCpuColors[cpuColIndex]
+						cpuImg:Invalidate()
+					end
 				end
+				
 				local pingImg = entities[i].pingImg
 				if pingImg then
-					pingImg.color = pingCol
 					pingImg.tooltip = (blank and nil or 'Ping: ' .. pingTime_readable)
-					pingImg:Invalidate()
+					if pingColIndex ~= entities[i].pingIndexOld then
+						entities[i].pingIndexOld = pingColIndex
+						pingImg.color = pingCpuColors[pingColIndex]
+						pingImg:Invalidate()
+					end
 				end
 			end
 
@@ -474,10 +484,10 @@ local function AddEntity(entity, teamID, allyTeamID)
 		deadTeam = true
 	end	
 	
-	local name,active,spectator,pingTime,cpuUsage,country,rank, customKeys
+	local name,active,spectator,pingTime,cpuUsage,country,_, customKeys
 	local playerID = entity.playerID or teams[teamID].leader
 	if playerID then
-		name,active,spectator,_,_,pingTime,cpuUsage,country,rank, customKeys = Spring.GetPlayerInfo(playerID)
+		name,active,spectator,_,_,pingTime,cpuUsage,country,_, customKeys = Spring.GetPlayerInfo(playerID)
 	end
 	--Spring.Echo("Entity with team ID " .. teamID .. " is " .. (active and '' or "NOT ") .. "active")
 	if not active then deadTeam = true end
@@ -506,10 +516,7 @@ local function AddEntity(entity, teamID, allyTeamID)
 		elseif (customKeys.faction~=nil and customKeys.faction~="") then
 			icon = "LuaUI/Configs/Factions/" .. customKeys.faction ..".png"
 		end 
-		if customKeys.level and customKeys.level~="" and customKeys.elo and customKeys.elo~="" then
-			local elo, xp = Spring.Utilities.TranslateLobbyRank(tonumber(customKeys.elo), tonumber(customKeys.level))
-			icRank = "LuaUI/Images/LobbyRanks/" .. xp .. "_" .. elo .. ".png"
-		end
+		icRank = "LuaUI/Images/LobbyRanks/" .. (customKeys.icon or "0_0") .. ".png"
 	end
 	
 	local min_pingTime = math.min(pingTime, 1)
@@ -764,8 +771,8 @@ SetupPlayerNames = function()
 	-- go through all players, register as entities, assign to teams
 	for i = 1, #playerlist do
 		local playerID = playerlist[i]
-		local name, active, spectator, teamID, allyTeamID, pingTime, cpuUsage, country, rank = Spring.GetPlayerInfo(playerID)
-		local isSpec = (teamID == 0 and spectator and (not Spring.GetGameRulesParam("initiallyPlayingPlayer_" .. playerID))) 
+		local name, active, spectator, teamID, allyTeamID, pingTime, cpuUsage, country = Spring.GetPlayerInfo(playerID)
+		local isSpec = (teamID == 0 and spectator and Spring.GetPlayerRulesParam(playerID, "initiallyPlayingPlayer") ~= 1)
 		local entityID = #entities + 1
 		entities[entityID] = {name = name, isSpec = isSpec, playerID = playerID, teamID = teamID}--(not spectator) and teamID or nil}
 		if not isSpec then
@@ -882,7 +889,7 @@ end
 -----------------------------------------------------------------------
 
 function widget:Initialize()
-	if (not WG.Chili) then
+	if not WG.Chili then
 		widgetHandler:RemoveWidget()
 		return
 	end

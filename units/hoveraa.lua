@@ -15,6 +15,9 @@ unitDef = {
   collisionVolumeOffsets = [[0 0 -5]],
   collisionVolumeScales  = [[40 40 40]],
   collisionVolumeType    = [[ellipsoid]], 
+  selectionVolumeOffsets = [[0 0 0]],
+  selectionVolumeScales  = [[45 45 45]],
+  selectionVolumeType    = [[ellipsoid]],
   corpse              = [[DEAD]],
 
   customParams        = {
@@ -77,6 +80,8 @@ unitDef = {
       cylinderTargeting       = 1,
 
       customParams            = {
+		burst = Shared.BURST_RELIABLE,
+
         isaa = [[1]],
         light_color = [[0.5 0.6 0.6]],
       },

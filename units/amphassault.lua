@@ -33,9 +33,10 @@ unitDef = {
   idleAutoHeal        = 5,
   idleTime            = 1800,
   leaveTracks         = true,
-  maxDamage           = 9000,
+  maxDamage           = 8400,
   maxSlope            = 36,
-  maxVelocity         = 1.6,
+  maxVelocity         = 1.5,
+  maxReverseVelocity  = 0,
   minCloakDistance    = 75,
   movementClass       = [[AKBOT4]],
   noChaseCategory     = [[TERRAFORM FIXEDWING SUB]],
@@ -87,7 +88,9 @@ unitDef = {
       craterMult              = 0,
 
       customParams            = {
-		light_color = [[0.6 0.6 1.8]],
+		burst = Shared.BURST_UNRELIABLE,
+
+		light_color = [[0.5 0.5 1.5]],
 		light_radius = 180,
       },
 

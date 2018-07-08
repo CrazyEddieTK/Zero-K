@@ -1,10 +1,10 @@
 unitDef = {
   unitname            = [[jumpcon]],
   name                = [[Constable]],
-  description         = [[Jumpjet Constructor, Builds at 5 m/s]],
+  description         = [[Jumpjet Constructor, Builds at 4 m/s]],
   acceleration        = 0.26,
   brakeRate           = 0.78,
-  buildCostMetal      = 160,
+  buildCostMetal      = 130,
   buildDistance       = 128,
   builder             = true,
 
@@ -16,6 +16,9 @@ unitDef = {
   canMove             = true,
   canPatrol           = true,
   category            = [[LAND UNARMED]],
+  selectionVolumeOffsets = [[0 0 0]],
+  selectionVolumeScales  = [[32 32 32]],
+  selectionVolumeType    = [[ellipsoid]],
   corpse              = [[DEAD]],
 
   customParams        = {
@@ -64,7 +67,7 @@ unitDef = {
   trackWidth          = 22,
   turnRate            = 1400,
   upright             = true,
-  workerTime          = 5,
+  workerTime          = 4,
  
   weapons             = {
 
